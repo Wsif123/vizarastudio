@@ -196,7 +196,11 @@ const PortfolioCard = ({ img, brand, type, tag }) => {
 function App() {
   const [selectedServices, setSelectedServices] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('video');
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const [showNav, setShowNav] = useState(true);
   const videoRef = useRef(null);
+  const lastScrollY = useRef(0);
 
   // Typewriter Setup
   const { displayed, done } = useTypewriter("we'd love to\nhear from you!", 38, 600);
@@ -261,6 +265,33 @@ function App() {
     }
   }, []);
 
+  // Nav hide-on-scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentY = window.scrollY;
+      if (currentY > lastScrollY.current && currentY > 80) {
+        setShowNav(false);
+      } else {
+        setShowNav(true);
+      }
+      lastScrollY.current = currentY;
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Pricing data
+  const videoPlans = [
+    { name: 'Basic', price: '$30', unit: '/ ad', delivery: '4-day delivery', revisions: '1 revision', cta: 'Get Started', popular: false, features: ['20s video, 1 length variation', '1 size/orientation', 'Video editing + script writing', 'Product imagery + voice-over'] },
+    { name: 'Standard', price: '$60', unit: '/ ad', delivery: '3-day delivery', revisions: '2 revisions', cta: 'Get Started', popular: true, features: ['20s video, 2 length variations', '2 size/orientations', 'Video editing + script writing', 'Product imagery + voice-over'] },
+    { name: 'Premium', price: '$80', unit: '/ ad', delivery: '2-day delivery', revisions: '3 revisions', cta: 'Get Started', popular: false, features: ['20s video, 3 length variations', '3 size/orientations', 'Video editing + script writing', 'Product imagery + voice-over'] },
+  ];
+  const photoPlans = [
+    { name: 'Starter', price: '$15', unit: '/ photo', delivery: '3-day delivery', revisions: '1 revision', cta: 'Get Started', popular: false, features: ['1 photo, 1 product', 'Lighting + retouching'] },
+    { name: 'Standard', price: '$45', unit: '/ 3 photos', delivery: '2-day delivery', revisions: '3 revisions', cta: 'Get Started', popular: true, features: ['3 photos, 1 product', 'Retouching + lighting + background removal'] },
+    { name: 'Premium', price: '$100', unit: '/ 5 photos', delivery: '1-day delivery', revisions: 'Unlimited revisions', cta: 'Get Started', popular: false, features: ['5 photos, 1 product', 'Lifestyle staging + styling + retouching + lighting + background removal'] },
+  ];
+
   // Toggle Services selections
   const toggleService = (opt) => {
     setSelectedServices(prev => 
@@ -286,7 +317,9 @@ function App() {
       </div>
 
       {/* Interactive Navbar Header */}
-      <header className="fixed top-0 inset-x-0 z-50 px-5 sm:px-8 py-4 sm:py-5 flex flex-row justify-between items-center bg-transparent">
+      <header className={`fixed top-0 inset-x-0 z-50 px-5 sm:px-8 py-4 sm:py-5 flex flex-row justify-between items-center bg-white/90 backdrop-blur-sm transition-transform duration-300 ${
+        showNav ? 'translate-y-0' : '-translate-y-full'
+      }`}>
         {/* Logo Left */}
         <a href="#" className="flex flex-row items-center gap-3">
           <span className="text-[21px] sm:text-[26px] tracking-tight text-black font-medium select-none">
@@ -465,7 +498,7 @@ function App() {
                       Ready to inquire about: <strong className="text-black">{selectedServices.join(", ")}</strong>
                     </span>
                     <button 
-                      onClick={() => document.getElementById('contact-form-anchor').scrollIntoView({behavior:'smooth'})}
+                      onClick={() => document.getElementById('contact-anchor').scrollIntoView({behavior:'smooth'})}
                       className="text-brand-greenLight uppercase text-xs font-bold tracking-wider hover:opacity-75 flex items-center gap-1"
                     >
                       Let's Go &rarr;
@@ -553,7 +586,7 @@ function App() {
 
       {/* PRICING SECTION */}
       <section id="pricing" className="relative z-10 bg-white border-t border-brand-borderLight py-24 px-6 sm:px-12 max-w-7xl mx-auto w-full">
-        <div className="mb-16 text-center">
+        <div className="mb-12 text-center">
           <span className="text-xs font-semibold tracking-widest text-brand-greenLight uppercase bg-brand-bannerBg border border-brand-borderLight py-1.5 px-4 rounded-full">
             Acquisition Plans
           </span>
@@ -562,104 +595,85 @@ function App() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Card 1 */}
-          <div className="border border-brand-borderLight rounded-3xl p-8 bg-white flex flex-col justify-between hover:shadow-lg transition-shadow duration-300">
-            <div>
-              <span className="text-xs font-bold tracking-widest uppercase text-neutral-400">Starter</span>
-              <div className="text-4xl font-bold text-black mt-4 mb-2">$25<span className="text-sm font-normal text-neutral-400"> / ad</span></div>
-              <p className="text-xs text-brand-desc mb-8">Perfect for testing our orbital output on a single product.</p>
-              <ul className="space-y-4 mb-8">
-                <li className="text-sm text-neutral-700 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-green" /> 1 cinematic visual
-                </li>
-                <li className="text-sm text-neutral-700 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-green" /> 2 revisions rounds
-                </li>
-                <li className="text-sm text-neutral-700 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-green" /> 48h turnaround time
-                </li>
-                <li className="text-sm text-neutral-700 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-green" /> 1080px output
-                </li>
-              </ul>
-            </div>
-            <button 
-              onClick={() => document.getElementById('contact-form-anchor').scrollIntoView({behavior:'smooth'})}
-              className="w-full py-4 rounded-full border border-brand-borderLight hover:border-neutral-400 transition-colors font-medium text-sm text-black uppercase tracking-wider"
+        {/* Tab Switcher */}
+        <div className="flex justify-center mb-12">
+          <div className="inline-flex bg-brand-bannerBg border border-brand-borderLight rounded-full p-1">
+            <button
+              onClick={() => setActiveTab('video')}
+              className={`px-8 py-3 rounded-full text-sm font-medium transition-all duration-200 ${
+                activeTab === 'video'
+                  ? 'bg-brand-green text-white shadow-md'
+                  : 'text-brand-desc hover:text-black'
+              }`}
             >
-              Get Started
+              Video Ads
             </button>
-          </div>
-
-          {/* Card 2 */}
-          <div className="border-2 border-brand-greenLight rounded-3xl p-8 bg-brand-bannerBg relative flex flex-col justify-between hover:shadow-xl transition-shadow duration-300">
-            <span className="absolute top-6 right-6 text-[10px] font-bold tracking-wider text-brand-greenLight uppercase bg-brand-greenLight/10 border border-brand-greenLight/20 py-1 px-3 rounded-full">
-              Most Popular
-            </span>
-            <div>
-              <span className="text-xs font-bold tracking-widest uppercase text-brand-greenLight">Growth</span>
-              <div className="text-4xl font-bold text-black mt-4 mb-2">$80<span className="text-sm font-normal text-neutral-400"> / 5 ads</span></div>
-              <p className="text-xs text-brand-desc mb-8">For brands ready to establish visual dominance on feeds.</p>
-              <ul className="space-y-4 mb-8">
-                <li className="text-sm text-neutral-700 flex items-center gap-2 font-medium">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-greenLight" /> 5 cinematic visuals
-                </li>
-                <li className="text-sm text-neutral-700 flex items-center gap-2 font-medium">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-greenLight" /> Unlimited revisions
-                </li>
-                <li className="text-sm text-neutral-700 flex items-center gap-2 font-medium">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-greenLight" /> 24h prioritized turnaround
-                </li>
-                <li className="text-sm text-neutral-700 flex items-center gap-2 font-medium">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-greenLight" /> 8K ultra-def output
-                </li>
-                <li className="text-sm text-neutral-700 flex items-center gap-2 font-medium">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-greenLight" /> Social media adaptation kit
-                </li>
-              </ul>
-            </div>
-            <button 
-              onClick={() => document.getElementById('contact-form-anchor').scrollIntoView({behavior:'smooth'})}
-              className="w-full py-4 rounded-full bg-brand-green text-white hover:bg-neutral-800 transition-colors font-medium text-sm uppercase tracking-wider shadow-md"
+            <button
+              onClick={() => setActiveTab('photo')}
+              className={`px-8 py-3 rounded-full text-sm font-medium transition-all duration-200 ${
+                activeTab === 'photo'
+                  ? 'bg-brand-green text-white shadow-md'
+                  : 'text-brand-desc hover:text-black'
+              }`}
             >
-              Secure Campaign
-            </button>
-          </div>
-
-          {/* Card 3 */}
-          <div className="border border-brand-borderLight rounded-3xl p-8 bg-white flex flex-col justify-between hover:shadow-lg transition-shadow duration-300">
-            <div>
-              <span className="text-xs font-bold tracking-widest uppercase text-neutral-400">Studio Partner</span>
-              <div className="text-4xl font-bold text-black mt-4 mb-2">$200<span className="text-sm font-normal text-neutral-400"> / mo</span></div>
-              <p className="text-xs text-brand-desc mb-8">Ongoing asset creation partner for scaling operations.</p>
-              <ul className="space-y-4 mb-8">
-                <li className="text-sm text-neutral-700 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-green" /> 20 visuals per month
-                </li>
-                <li className="text-sm text-neutral-700 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-green" /> Priority 12h delivery cycles
-                </li>
-                <li className="text-sm text-neutral-700 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-green" /> 8K + print-ready files
-                </li>
-                <li className="text-sm text-neutral-700 flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-brand-green" /> Dedicated brand style guides
-                </li>
-              </ul>
-            </div>
-            <button 
-              onClick={() => document.getElementById('contact-form-anchor').scrollIntoView({behavior:'smooth'})}
-              className="w-full py-4 rounded-full border border-brand-borderLight hover:border-neutral-400 transition-colors font-medium text-sm text-black uppercase tracking-wider"
-            >
-              Let's Talk
+              Product Photography
             </button>
           </div>
         </div>
+
+        {/* Pricing Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+          {(activeTab === 'video' ? videoPlans : photoPlans).map((plan, idx) => (
+            <div
+              key={plan.name}
+              onMouseEnter={() => setHoveredCard(plan.name)}
+              onMouseLeave={() => setHoveredCard(null)}
+              className={`relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
+                hoveredCard === plan.name
+                  ? 'border-2 border-brand-greenLight bg-brand-bannerBg shadow-xl'
+                  : 'border border-brand-borderLight bg-white'
+              }`}
+            >
+              {plan.popular && (
+                <span className="absolute top-6 right-6 text-[10px] font-bold tracking-wider text-brand-greenLight uppercase bg-brand-greenLight/10 border border-brand-greenLight/20 py-1 px-3 rounded-full">
+                  Most Popular
+                </span>
+              )}
+              <div>
+                <span className="text-xs font-bold tracking-widest uppercase text-neutral-400">{plan.name}</span>
+                <div className="text-4xl font-bold text-black mt-4 mb-2">
+                  {plan.price}<span className="text-sm font-normal text-neutral-400"> {plan.unit}</span>
+                </div>
+                <p className="text-xs text-brand-desc mb-6">{plan.delivery} &middot; {plan.revisions}</p>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((f, i) => (
+                    <li key={i} className="text-sm text-neutral-700 flex items-start gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-brand-greenLight mt-1.5 shrink-0" /> {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <button
+                onClick={() => document.getElementById('contact-anchor').scrollIntoView({behavior:'smooth'})}
+                className={`w-full py-4 rounded-full text-sm font-medium uppercase tracking-wider transition-all duration-200 ${
+                  hoveredCard === plan.name
+                    ? 'bg-brand-green text-white shadow-md hover:bg-neutral-800'
+                    : 'border border-brand-borderLight text-black hover:border-neutral-400'
+                }`}
+              >
+                {plan.cta}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        <p className="text-xs text-brand-desc text-center max-w-lg mx-auto">
+          Additional revisions available as paid add-on. Rush delivery available on request.
+        </p>
       </section>
 
       {/* CONTACT FORM SECTION */}
-      <section id="contact-form-anchor" className="relative z-10 bg-white border-t border-brand-borderLight py-24 px-6 sm:px-12 max-w-4xl mx-auto w-full">
+      <section id="contact-anchor" className="relative z-10 bg-white border-t border-brand-borderLight py-24 px-6 sm:px-12 max-w-4xl mx-auto w-full">
         <div className="bg-brand-bannerBg border border-brand-borderLight rounded-[36px] p-8 md:p-16 text-center">
           <h2 className="text-4xl font-semibold text-black tracking-tight mb-4">
             Ready to look <span className="italic font-serif text-brand-greenLight">expensive?</span>
