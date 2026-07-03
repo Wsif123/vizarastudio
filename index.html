@@ -216,15 +216,15 @@ const ParticleField = () => {
       particles.push({
         x: Math.random() * canvas.width,
         y: Math.random() * canvas.height,
-        w: 8 + Math.random() * 4,
-        h: 8 + Math.random() * 4,
+        w: 14 + Math.random() * 6,
+        h: 14 + Math.random() * 6,
         baseX: Math.random() * canvas.width,
         baseY: Math.random() * canvas.height,
         driftSpeed: 0.002 + Math.random() * 0.006,
-        hue: 100 + Math.random() * 40,
-        sat: 25 + Math.random() * 20,
-        light: 30 + Math.random() * 20,
-        alpha: 0.2 + Math.random() * 0.3,
+        hue: Math.random() * 360,
+        sat: 60 + Math.random() * 30,
+        light: 45 + Math.random() * 25,
+        alpha: 0.5 + Math.random() * 0.3,
       });
     }
 
@@ -413,7 +413,7 @@ function App() {
       <div className="order-last lg:order-none relative lg:absolute lg:inset-0 lg:z-0 overflow-hidden pointer-events-none w-full aspect-square md:aspect-video lg:aspect-auto lg:h-full bg-neutral-50 lg:bg-transparent">
         <video 
           ref={videoRef}
-          className="w-full h-full object-cover object-center"
+          className="w-full h-full object-contain object-center"
           muted
           playsInline
           preload="auto"
