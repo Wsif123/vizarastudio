@@ -410,10 +410,10 @@ function App() {
       <ParticleField />
       
       {/* Background Video Component */}
-      <div className="order-last lg:order-none relative lg:absolute lg:inset-0 lg:z-0 overflow-hidden pointer-events-none w-full aspect-square md:aspect-video lg:aspect-auto lg:h-full bg-neutral-50 lg:bg-transparent">
+      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-neutral-50">
         <video 
           ref={videoRef}
-          className="w-full h-full object-contain object-center"
+          className="w-full h-full object-cover object-left"
           muted
           playsInline
           preload="auto"
@@ -505,7 +505,7 @@ function App() {
       </div>
 
       {/* Content Layout Container */}
-      <div className="relative z-10 flex flex-col order-first lg:order-none w-full bg-white lg:bg-transparent pb-8 lg:pb-0 lg:min-h-screen">
+      <div className="relative z-10 flex flex-col order-first lg:order-none w-full bg-white pb-8 lg:pb-0 lg:min-h-screen">
         <main id="spade-hero" className="w-full max-w-7xl mx-auto px-6 pt-32 pb-16 lg:py-12 flex-1 flex flex-col justify-center">
           
           {/* Headline drop-in animation */}
