@@ -191,7 +191,110 @@ const PortfolioCard = ({ img, brand, type, tag }) => {
 };
 
 // ==========================================
-// 4. MAIN APP COMPONENT
+// 4. PARTICLE FIELD COMPONENT
+// ==========================================
+const ParticleField = () => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animId;
+    let mouse = { x: -2000, y: -2000 };
+    const COUNT = 35;
+    const particles = [];
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    for (let i = 0; i < COUNT; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        w: 3 + Math.random() * 2,
+        h: 3 + Math.random() * 2,
+        baseX: Math.random() * canvas.width,
+        baseY: Math.random() * canvas.height,
+        driftSpeed: 0.002 + Math.random() * 0.006,
+        hue: 100 + Math.random() * 40,
+        sat: 25 + Math.random() * 20,
+        light: 30 + Math.random() * 20,
+        alpha: 0.2 + Math.random() * 0.3,
+      });
+    }
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach((p) => {
+        const dx = mouse.x - p.x;
+        const dy = mouse.y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 250) {
+          const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.4;
+          const force = ((250 - dist) / 250) * 0.8;
+          p.x += Math.cos(angle) * force;
+          p.y += Math.sin(angle) * force;
+        } else {
+          p.x += (p.baseX - p.x) * p.driftSpeed;
+          p.y += (p.baseY - p.y) * p.driftSpeed;
+          if (Math.abs(p.x - p.baseX) < 2 && Math.abs(p.y - p.baseY) < 2) {
+            p.baseX = 50 + Math.random() * (canvas.width - 100);
+            p.baseY = 50 + Math.random() * (canvas.height - 100);
+          }
+        }
+
+        p.x = Math.max(0, Math.min(canvas.width, p.x));
+        p.y = Math.max(0, Math.min(canvas.height, p.y));
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+
+        const inset = 1;
+        ctx.fillStyle = `hsla(${p.hue}, ${p.sat}%, ${p.light}%, ${p.alpha})`;
+        ctx.fillRect(-p.w / 2 + inset, -p.h / 2 + inset, p.w - inset * 2, p.h - inset * 2);
+
+        ctx.fillStyle = `hsla(${p.hue + 20}, ${p.sat + 10}%, ${p.light + 15}%, ${p.alpha * 0.6})`;
+        ctx.fillRect(-p.w / 2 + inset + 1, -p.h / 2 + 1, 1, 1);
+        ctx.fillRect(-p.w / 2 + 1, -p.h / 2 + inset + 1, 1, 1);
+
+        ctx.restore();
+      });
+
+      animId = requestAnimationFrame(animate);
+    };
+
+    const handleMouseMove = (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="fixed inset-0 z-[1] pointer-events-none"
+    />
+  );
+};
+
+// ==========================================
+// 5. MAIN APP COMPONENT
 // ==========================================
 function App() {
   const [selectedServices, setSelectedServices] = useState([]);
@@ -303,6 +406,8 @@ function App() {
 
   return (
     <div className="relative bg-white text-neutral-900 font-sans selection:bg-[#EAECE9] selection:text-[#1C2E1E] antialiased overflow-x-hidden flex flex-col lg:block lg:min-h-screen">
+      
+      <ParticleField />
       
       {/* Background Video Component */}
       <div className="order-last lg:order-none relative lg:absolute lg:inset-0 lg:z-0 overflow-hidden pointer-events-none w-full aspect-square md:aspect-video lg:aspect-auto lg:h-full bg-neutral-50 lg:bg-transparent">
