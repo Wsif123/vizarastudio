@@ -185,10 +185,17 @@ const CheckIcon = () => (
 // ==========================================
 // 3. TILT PORTFOLIO CARD COMPONENT
 // ==========================================
-const PortfolioCard = ({ img, brand, type, tag }) => {
+const PortfolioCard = ({ img, brand, type, tag, video }) => {
   const cardRef = useRef(null);
+  const videoRef = useRef(null);
   const [tilt, setTilt] = useState({ x: 0, y: 0 });
   const [sheen, setSheen] = useState({ x: 0, y: 0, active: false });
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.play().catch(() => {});
+    }
+  }, []);
 
   const handleMouseMove = (e) => {
     const card = cardRef.current;
@@ -214,10 +221,11 @@ const PortfolioCard = ({ img, brand, type, tag }) => {
       onMouseLeave={handleMouseLeave}
       style={{
         transform: `perspective(1000px) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg) translateY(${tilt.x !== 0 ? '-6px' : '0px'})`,
-        transition: 'transform 0.15s ease-out, box-shadow 0.3s ease'
+        transition: 'transform 0.15s ease-out, box-shadow 0.3s ease',
+        border: '1px solid var(--border-color)',
+        backgroundColor: 'var(--card-bg)'
       }}
       className="relative overflow-hidden rounded-3xl p-4 hover:shadow-xl hover:border-brand-green/20"
-      style={{ border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}
     >
       {sheen.active && (
         <div 
@@ -228,11 +236,23 @@ const PortfolioCard = ({ img, brand, type, tag }) => {
         />
       )}
       <div className="overflow-hidden rounded-2xl aspect-square" style={{ backgroundColor: 'var(--neutral-100)' }}>
-        <img 
-          src={img} 
-          alt={brand} 
-          className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" 
-        />
+        {video ? (
+          <video
+            ref={videoRef}
+            src={video}
+            muted
+            autoPlay
+            loop
+            playsInline
+            className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
+          />
+        ) : (
+          <img 
+            src={img} 
+            alt={brand} 
+            className="w-full h-full object-cover transition-transform duration-700 hover:scale-105" 
+          />
+        )}
       </div>
       <div className="pt-5 pb-1 px-1">
         <span className="text-[10px] tracking-widest uppercase text-brand-greenLight font-semibold py-1 px-3 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
@@ -665,6 +685,36 @@ function App() {
             brand="Hemani Venturous" 
             type="Dark Botanical Fragrance" 
             tag="Beauty & Fragrance" 
+          />
+          <PortfolioCard
+            video="/assets/apple-headphones-ad.mp4"
+            brand="Apple Headphones"
+            type="Cinematic Tech Campaign"
+            tag="Tech & Audio"
+          />
+          <PortfolioCard
+            video="/assets/shezan-pomegranate-ad.mp4"
+            brand="Shezan Pomegranate"
+            type="Luxury Splash Campaign"
+            tag="Beverages"
+          />
+          <PortfolioCard
+            img="/assets/starbuck-coffee.jpg"
+            brand="Starbucks Coffee"
+            type="Artisan Beverage Campaign"
+            tag="Food & Beverage"
+          />
+          <PortfolioCard
+            img="/assets/velora-handbag.jpg"
+            brand="Velora Handbag"
+            type="Luxury Accessories Campaign"
+            tag="Fashion & Accessories"
+          />
+          <PortfolioCard
+            img="/assets/zelpor-shoes.png"
+            brand="Zelpor Shoes"
+            type="Premium Footwear Campaign"
+            tag="Footwear"
           />
         </div>
       </section>
