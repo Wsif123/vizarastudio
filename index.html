@@ -57,14 +57,68 @@
     width: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #ffffff;
+    background: var(--scrollbar-track);
   }
   ::-webkit-scrollbar-thumb {
-    background: #e2e8f0;
+    background: var(--scrollbar-thumb);
     border-radius: 10px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #cbd5e1;
+    background: var(--scrollbar-thumb-hover);
+  }
+</style>
+<style>
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #FAFBF9;
+    --text-primary: #000000;
+    --text-secondary: #5A635A;
+    --text-muted: #737373;
+    --text-subtle: #a3a3a3;
+    --text-neutral-700: #404040;
+    --text-neutral-800: #262626;
+    --border-color: #F1F3F1;
+    --header-bg: rgba(255,255,255,0.9);
+    --input-bg: #ffffff;
+    --overlay-bg: rgba(255,255,255,0.95);
+    --card-bg: #ffffff;
+    --neutral-50: #fafafa;
+    --neutral-100: #f5f5f5;
+    --neutral-400: #a3a3a3;
+    --neutral-500: #737373;
+    --neutral-700: #404040;
+    --neutral-800: #262626;
+    --scrollbar-track: #ffffff;
+    --scrollbar-thumb: #e2e8f0;
+    --scrollbar-thumb-hover: #cbd5e1;
+  }
+  .dark {
+    --bg-primary: #111827;
+    --bg-secondary: #1f2937;
+    --text-primary: #f3f4f6;
+    --text-secondary: #d1d5db;
+    --text-muted: #9ca3af;
+    --text-subtle: #6b7280;
+    --text-neutral-700: #d1d5db;
+    --text-neutral-800: #e5e7eb;
+    --border-color: #374151;
+    --header-bg: rgba(17,24,39,0.9);
+    --input-bg: #374151;
+    --overlay-bg: rgba(17,24,39,0.95);
+    --card-bg: #1f2937;
+    --neutral-50: #1f2937;
+    --neutral-100: #374151;
+    --neutral-400: #9ca3af;
+    --neutral-500: #9ca3af;
+    --neutral-700: #d1d5db;
+    --neutral-800: #e5e7eb;
+    --scrollbar-track: #1f2937;
+    --scrollbar-thumb: #4b5563;
+    --scrollbar-thumb-hover: #6b7280;
+  }
+  .dark input::placeholder,
+  .dark textarea::placeholder {
+    color: #6b7280;
   }
 </style>
 </head>
@@ -162,7 +216,8 @@ const PortfolioCard = ({ img, brand, type, tag }) => {
         transform: `perspective(1000px) rotateY(${tilt.x}deg) rotateX(${tilt.y}deg) translateY(${tilt.x !== 0 ? '-6px' : '0px'})`,
         transition: 'transform 0.15s ease-out, box-shadow 0.3s ease'
       }}
-      className="relative overflow-hidden rounded-3xl border border-[#F1F3F1] bg-white p-4 hover:shadow-xl hover:border-brand-green/20"
+      className="relative overflow-hidden rounded-3xl p-4 hover:shadow-xl hover:border-brand-green/20"
+      style={{ border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}
     >
       {sheen.active && (
         <div 
@@ -172,7 +227,7 @@ const PortfolioCard = ({ img, brand, type, tag }) => {
           className="absolute inset-0 pointer-events-none z-10"
         />
       )}
-      <div className="overflow-hidden rounded-2xl bg-neutral-100 aspect-square">
+      <div className="overflow-hidden rounded-2xl aspect-square" style={{ backgroundColor: 'var(--neutral-100)' }}>
         <img 
           src={img} 
           alt={brand} 
@@ -180,11 +235,11 @@ const PortfolioCard = ({ img, brand, type, tag }) => {
         />
       </div>
       <div className="pt-5 pb-1 px-1">
-        <span className="text-[10px] tracking-widest uppercase text-brand-greenLight font-semibold bg-brand-bannerBg border border-brand-borderLight py-1 px-3 rounded-full">
+        <span className="text-[10px] tracking-widest uppercase text-brand-greenLight font-semibold py-1 px-3 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
           {tag}
         </span>
-        <h4 className="text-xl font-medium text-black mt-4 mb-1">{brand}</h4>
-        <p className="text-sm text-brand-desc">{type}</p>
+        <h4 className="text-xl font-medium mt-4 mb-1" style={{ color: 'var(--text-primary)' }}>{brand}</h4>
+        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{type}</p>
       </div>
     </div>
   );
@@ -302,7 +357,16 @@ function App() {
   const [activeTab, setActiveTab] = useState('video');
   const [hoveredCard, setHoveredCard] = useState(null);
   const [showNav, setShowNav] = useState(true);
+  const [theme, setTheme] = useState(() => localStorage.getItem('vizara-theme') || 'light');
   const lastScrollY = useRef(0);
+
+  useEffect(() => {
+    localStorage.setItem('vizara-theme', theme);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(t => t === 'light' ? 'dark' : 'light');
+  const isDark = theme === 'dark';
 
   // Typewriter Setup
   const { displayed, done } = useTypewriter("we'd love to\nhear from you!", 38, 600);
@@ -344,28 +408,30 @@ function App() {
   const serviceOptions = ["Brand", "Digital", "Campaign", "Other"];
 
   return (
-    <div className="relative bg-white text-neutral-900 font-sans selection:bg-[#EAECE9] selection:text-[#1C2E1E] antialiased overflow-x-hidden flex flex-col lg:block lg:min-h-screen">
+    <div className={`${isDark ? 'dark' : ''} relative font-sans selection:bg-[#EAECE9] selection:text-[#1C2E1E] antialiased overflow-x-hidden flex flex-col lg:block lg:min-h-screen`}
+      style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       
       <ParticleField />
       
 
 
       {/* Interactive Navbar Header */}
-      <header className={`fixed top-0 inset-x-0 z-50 px-5 sm:px-8 py-4 sm:py-5 flex flex-row justify-between items-center bg-white/90 backdrop-blur-sm transition-transform duration-300 ${
+      <header className={`fixed top-0 inset-x-0 z-50 px-5 sm:px-8 py-4 sm:py-5 flex flex-row justify-between items-center backdrop-blur-sm transition-transform duration-300 ${
         showNav ? 'translate-y-0' : '-translate-y-full'
-      }`}>
+      }`}
+        style={{ backgroundColor: 'var(--header-bg)' }}>
         {/* Logo Left */}
         <a href="#" className="flex flex-row items-center gap-3">
-          <span className="text-[21px] sm:text-[26px] tracking-tight text-black font-medium select-none">
+          <span className="text-[21px] sm:text-[26px] tracking-tight font-medium select-none" style={{ color: 'var(--text-primary)' }}>
             Vizara Studio&reg;
           </span>
-          <span className="text-[25px] sm:text-[30px] text-black select-none tracking-[-0.02em] font-medium leading-none mb-1">
+          <span className="text-[25px] sm:text-[30px] select-none tracking-[-0.02em] font-medium leading-none mb-1" style={{ color: 'var(--text-primary)' }}>
             &#10033;
           </span>
         </a>
 
         {/* Desktop Nav Links Center */}
-        <div className="hidden md:flex flex-row items-center text-[23px] text-black">
+        <div className="hidden md:flex flex-row items-center text-[23px]" style={{ color: 'var(--text-primary)' }}>
           <a href="#work" className="hover:opacity-60 transition-opacity">Work</a>
           <span className="opacity-40">,&nbsp;</span>
           <a href="#process" className="hover:opacity-60 transition-opacity">Process</a>
@@ -376,65 +442,84 @@ function App() {
         </div>
 
         {/* Desktop CTA Right */}
-        <div className="hidden md:block">
+        <div className="hidden md:flex items-center gap-5">
+          <button
+            onClick={toggleTheme}
+            className="text-[20px] hover:opacity-60 transition-opacity"
+            style={{ color: 'var(--text-primary)' }}
+            aria-label="Toggle theme"
+          >
+            {isDark ? '☀️' : '🌙'}
+          </button>
           <a 
             href="#contact-anchor" 
-            className="text-[23px] text-black underline underline-offset-2 hover:opacity-60 transition-opacity"
+            className="text-[23px] underline underline-offset-2 hover:opacity-60 transition-opacity"
+            style={{ color: 'var(--text-primary)' }}
           >
             Get in touch
           </a>
         </div>
 
-        {/* Mobile Hamburger Button */}
-        <button 
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="flex md:hidden flex-col justify-center items-center gap-1.5 w-8 h-8 z-50 focus:outline-none"
-          aria-label="Toggle Mobile Menu"
-        >
-          <span className={`w-6 h-[2px] bg-black transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-[8px]' : ''}`} />
-          <span className={`w-6 h-[2px] bg-black transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`} />
-          <span className={`w-6 h-[2px] bg-black transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-[8px]' : ''}`} />
-        </button>
+        {/* Mobile controls: theme toggle + hamburger */}
+        <div className="flex md:hidden items-center gap-3">
+          <button
+            onClick={toggleTheme}
+            className="text-[20px] hover:opacity-60 transition-opacity"
+            aria-label="Toggle theme"
+          >
+            {isDark ? '☀️' : '🌙'}
+          </button>
+          <button 
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="flex flex-col justify-center items-center gap-1.5 w-8 h-8 z-50 focus:outline-none"
+            aria-label="Toggle Mobile Menu"
+          >
+            <span className={`w-6 h-[2px] transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-[8px]' : ''}`} style={{ backgroundColor: 'var(--text-primary)' }} />
+            <span className={`w-6 h-[2px] transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`} style={{ backgroundColor: 'var(--text-primary)' }} />
+            <span className={`w-6 h-[2px] transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-[8px]' : ''}`} style={{ backgroundColor: 'var(--text-primary)' }} />
+          </button>
+        </div>
       </header>
 
       {/* Full-Screen Mobile Navigation Overlay */}
       <div 
-        className={`fixed inset-0 z-40 bg-white/95 backdrop-blur-md flex flex-col justify-center items-center gap-8 transition-all duration-300 md:hidden ${
+        className={`fixed inset-0 z-40 backdrop-blur-md flex flex-col justify-center items-center gap-8 transition-all duration-300 md:hidden ${
           isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
+        style={{ backgroundColor: 'var(--overlay-bg)' }}
       >
         <a 
           href="#work" 
           onClick={() => setIsMobileMenuOpen(false)}
-          className="text-3xl font-semibold text-black hover:opacity-60"
+          className="text-3xl font-semibold hover:opacity-60" style={{ color: 'var(--text-primary)' }}
         >
           Work
         </a>
         <a 
           href="#process" 
           onClick={() => setIsMobileMenuOpen(false)}
-          className="text-3xl font-semibold text-black hover:opacity-60"
+          className="text-3xl font-semibold hover:opacity-60" style={{ color: 'var(--text-primary)' }}
         >
           Process
         </a>
         <a 
           href="#pricing" 
           onClick={() => setIsMobileMenuOpen(false)}
-          className="text-3xl font-semibold text-black hover:opacity-60"
+          className="text-3xl font-semibold hover:opacity-60" style={{ color: 'var(--text-primary)' }}
         >
           Pricing
         </a>
         <a 
           href="#contact-anchor" 
           onClick={() => setIsMobileMenuOpen(false)}
-          className="text-3xl font-semibold text-black hover:opacity-60"
+          className="text-3xl font-semibold hover:opacity-60" style={{ color: 'var(--text-primary)' }}
         >
           Get In Touch
         </a>
       </div>
 
       {/* Content Layout Container */}
-      <div className="relative z-10 flex flex-col order-first lg:order-none w-full bg-white pb-8 lg:pb-0 lg:min-h-screen">
+      <div className="relative z-10 flex flex-col order-first lg:order-none w-full pb-8 lg:pb-0 lg:min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
         <main id="spade-hero" className="w-full max-w-7xl mx-auto px-6 pt-32 pb-16 lg:py-12 flex-1 flex flex-col justify-center">
           
           {/* Headline drop-in animation */}
@@ -444,10 +529,10 @@ function App() {
             transition={{ duration: 0.6 }}
             className="w-full"
           >
-            <h1 className="text-5xl md:text-6xl lg:text-[76px] font-normal tracking-tight text-black leading-[1.08] mb-8 select-none w-full whitespace-pre-wrap">
+            <h1 className="text-5xl md:text-6xl lg:text-[76px] font-normal tracking-tight leading-[1.08] mb-8 select-none w-full whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>
               {displayed}
               {!done && (
-                <span className="inline-block w-[2px] h-[1.1em] bg-black align-middle ml-[2px] animate-blink" />
+                <span className="inline-block w-[2px] h-[1.1em] align-middle ml-[2px] animate-blink" style={{ backgroundColor: 'var(--text-primary)' }} />
               )}
             </h1>
           </motion.div>
@@ -458,7 +543,7 @@ function App() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
           >
-            <p className="text-lg md:text-xl text-brand-desc leading-relaxed font-normal mb-14 max-w-2xl">
+            <p className="text-lg md:text-xl leading-relaxed font-normal mb-14 max-w-2xl" style={{ color: 'var(--text-secondary)' }}>
               Whether you have questions, feedback, <br /> drop us a message and we'll get back to you as soon as possible.
             </p>
           </motion.div>
@@ -470,8 +555,8 @@ function App() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="w-full max-w-2xl"
           >
-            <h3 className="text-2xl font-medium tracking-tight mb-2">What sort of service?</h3>
-            <p className="opacity-85 text-brand-subtitle mb-8">Select all that apply</p>
+            <h3 className="text-2xl font-medium tracking-tight mb-2" style={{ color: 'var(--text-primary)' }}>What sort of service?</h3>
+            <p className="opacity-85 mb-8" style={{ color: 'var(--text-secondary)' }}>Select all that apply</p>
             
             <div className="flex flex-wrap gap-3 mb-8">
               {serviceOptions.map((opt) => {
@@ -485,8 +570,9 @@ function App() {
                     className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all duration-200 ${
                       isActive 
                         ? 'bg-brand-green text-white shadow-md shadow-emerald-950/5' 
-                        : 'bg-white text-brand-green border border-brand-borderLight hover:bg-brand-borderLight/55'
+                        : 'text-brand-green'
                     }`}
+                    style={isActive ? {} : { backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}
                   >
                     <AnimatePresence>
                       {isActive && (
@@ -515,7 +601,7 @@ function App() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 0.5 }}
                     exit={{ opacity: 0 }}
-                    className="italic text-xs text-neutral-500 font-normal"
+                    className="italic text-xs font-normal" style={{ color: 'var(--text-muted)' }}
                   >
                     Please click to select services above.
                   </motion.p>
@@ -526,10 +612,11 @@ function App() {
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
                     transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                    className="w-full bg-brand-bannerBg border border-brand-borderLight rounded-2xl p-4 flex flex-row justify-between items-center"
+                    className="w-full rounded-2xl p-4 flex flex-row justify-between items-center"
+                    style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
                   >
-                    <span className="text-xs text-neutral-800 font-medium">
-                      Ready to inquire about: <strong className="text-black">{selectedServices.join(", ")}</strong>
+                    <span className="text-xs font-medium" style={{ color: 'var(--text-neutral-800)' }}>
+                      Ready to inquire about: <strong style={{ color: 'var(--text-primary)' }}>{selectedServices.join(", ")}</strong>
                     </span>
                     <button 
                       onClick={() => document.getElementById('contact-anchor').scrollIntoView({behavior:'smooth'})}
@@ -547,15 +634,15 @@ function App() {
       </div>
 
       {/* PORTFOLIO SECTION */}
-      <section id="work" className="relative z-10 bg-white border-t border-brand-borderLight py-24 px-6 sm:px-12 max-w-7xl mx-auto w-full">
+      <section id="work" className="relative z-10 border-t py-24 px-6 sm:px-12 max-w-7xl mx-auto w-full" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
         <div className="mb-16">
-          <span className="text-xs font-semibold tracking-widest text-brand-greenLight uppercase bg-brand-bannerBg border border-brand-borderLight py-1.5 px-4 rounded-full">
+          <span className="text-xs font-semibold tracking-widest text-brand-greenLight uppercase py-1.5 px-4 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
             Completed Campaigns
           </span>
-          <h2 className="text-4xl md:text-5xl font-semibold text-black tracking-tight mt-6 mb-4">
+          <h2 className="text-4xl md:text-5xl font-semibold tracking-tight mt-6 mb-4" style={{ color: 'var(--text-primary)' }}>
             Transformations that sell.
           </h2>
-          <p className="text-neutral-500 text-lg max-w-xl">
+          <p className="text-lg max-w-xl" style={{ color: 'var(--text-muted)' }}>
             Every product deserves visuals that command attention. Here are creative assets built in our orbital rendering pipelines.
           </p>
         </div>
@@ -583,35 +670,35 @@ function App() {
       </section>
 
       {/* PROCESS SECTION */}
-      <section id="process" className="relative z-10 bg-white border-t border-brand-borderLight py-24 px-6 sm:px-12 max-w-7xl mx-auto w-full">
+      <section id="process" className="relative z-10 border-t py-24 px-6 sm:px-12 max-w-7xl mx-auto w-full" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
         <div className="mb-16 text-center">
-          <span className="text-xs font-semibold tracking-widest text-brand-greenLight uppercase bg-brand-bannerBg border border-brand-borderLight py-1.5 px-4 rounded-full">
+          <span className="text-xs font-semibold tracking-widest text-brand-greenLight uppercase py-1.5 px-4 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
             The Orbital Process
           </span>
-          <h2 className="text-4xl md:text-5xl font-semibold text-black tracking-tight mt-6">
+          <h2 className="text-4xl md:text-5xl font-semibold tracking-tight mt-6" style={{ color: 'var(--text-primary)' }}>
             Simple for you. Powerful in output.
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 bg-brand-bannerBg border border-brand-borderLight rounded-[36px] p-8 md:p-12">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 rounded-[36px] p-8 md:p-12" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
           <div className="flex flex-col">
             <span className="text-5xl font-light text-brand-greenLight/60 mb-6 font-serif italic">01</span>
-            <h3 className="text-xl font-medium text-black mb-3">Send your product details</h3>
-            <p className="text-brand-desc text-sm leading-relaxed">
+            <h3 className="text-xl font-medium mb-3" style={{ color: 'var(--text-primary)' }}>Send your product details</h3>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
               Just upload a photo of your product. Any angle, any background quality. Our studio engines handles the rest.
             </p>
           </div>
-          <div className="flex flex-col border-t md:border-t-0 md:border-l border-brand-borderLight pt-8 md:pt-0 md:pl-10">
+          <div className="flex flex-col border-t md:border-t-0 md:border-l pt-8 md:pt-0 md:pl-10" style={{ borderColor: 'var(--border-color)' }}>
             <span className="text-5xl font-light text-brand-greenLight/60 mb-6 font-serif italic">02</span>
-            <h3 className="text-xl font-medium text-black mb-3">Orbital Rendering</h3>
-            <p className="text-brand-desc text-sm leading-relaxed">
+            <h3 className="text-xl font-medium mb-3" style={{ color: 'var(--text-primary)' }}>Orbital Rendering</h3>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
               Our designers dissect your brand DNA to build an ultra-premium, custom cinematic environment and lighting visualizer.
             </p>
           </div>
-          <div className="flex flex-col border-t md:border-t-0 md:border-l border-brand-borderLight pt-8 md:pt-0 md:pl-10">
+          <div className="flex flex-col border-t md:border-t-0 md:border-l pt-8 md:pt-0 md:pl-10" style={{ borderColor: 'var(--border-color)' }}>
             <span className="text-5xl font-light text-brand-greenLight/60 mb-6 font-serif italic">03</span>
-            <h3 className="text-xl font-medium text-black mb-3">Receive & Publish</h3>
-            <p className="text-brand-desc text-sm leading-relaxed">
+            <h3 className="text-xl font-medium mb-3" style={{ color: 'var(--text-primary)' }}>Receive & Publish</h3>
+            <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
               Stunning 8K digital assets delivered in 24 hours. Optimized for Instagram, Amazon, Daraz, or high-definition print billboards.
             </p>
           </div>
@@ -619,26 +706,27 @@ function App() {
       </section>
 
       {/* PRICING SECTION */}
-      <section id="pricing" className="relative z-10 bg-white border-t border-brand-borderLight py-24 px-6 sm:px-12 max-w-7xl mx-auto w-full">
+      <section id="pricing" className="relative z-10 border-t py-24 px-6 sm:px-12 max-w-7xl mx-auto w-full" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
         <div className="mb-12 text-center">
-          <span className="text-xs font-semibold tracking-widest text-brand-greenLight uppercase bg-brand-bannerBg border border-brand-borderLight py-1.5 px-4 rounded-full">
+          <span className="text-xs font-semibold tracking-widest text-brand-greenLight uppercase py-1.5 px-4 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
             Acquisition Plans
           </span>
-          <h2 className="text-4xl md:text-5xl font-semibold text-black tracking-tight mt-6">
+          <h2 className="text-4xl md:text-5xl font-semibold tracking-tight mt-6" style={{ color: 'var(--text-primary)' }}>
             Agency quality. Not agency prices.
           </h2>
         </div>
 
         {/* Tab Switcher */}
         <div className="flex justify-center mb-12">
-          <div className="inline-flex bg-brand-bannerBg border border-brand-borderLight rounded-full p-1">
+          <div className="inline-flex rounded-full p-1" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
             <button
               onClick={() => setActiveTab('video')}
               className={`px-8 py-3 rounded-full text-sm font-medium transition-all duration-200 ${
                 activeTab === 'video'
                   ? 'bg-brand-green text-white shadow-md'
-                  : 'text-brand-desc hover:text-black'
+                  : 'hover:text-black'
               }`}
+              style={activeTab !== 'video' ? { color: 'var(--text-secondary)' } : {}}
             >
               Video Ads
             </button>
@@ -647,8 +735,9 @@ function App() {
               className={`px-8 py-3 rounded-full text-sm font-medium transition-all duration-200 ${
                 activeTab === 'photo'
                   ? 'bg-brand-green text-white shadow-md'
-                  : 'text-brand-desc hover:text-black'
+                  : 'hover:text-black'
               }`}
+              style={activeTab !== 'photo' ? { color: 'var(--text-secondary)' } : {}}
             >
               Product Photography
             </button>
@@ -664,9 +753,10 @@ function App() {
               onMouseLeave={() => setHoveredCard(null)}
               className={`relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
                 hoveredCard === plan.name
-                  ? 'border-2 border-brand-greenLight bg-brand-bannerBg shadow-xl'
-                  : 'border border-brand-borderLight bg-white'
+                  ? 'border-2 border-brand-greenLight shadow-xl'
+                  : ''
               }`}
+              style={hoveredCard === plan.name ? { backgroundColor: 'var(--bg-secondary)' } : { border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}
             >
               {plan.popular && (
                 <span className="absolute top-6 right-6 text-[10px] font-bold tracking-wider text-brand-greenLight uppercase bg-brand-greenLight/10 border border-brand-greenLight/20 py-1 px-3 rounded-full">
@@ -674,14 +764,14 @@ function App() {
                 </span>
               )}
               <div>
-                <span className="text-xs font-bold tracking-widest uppercase text-neutral-400">{plan.name}</span>
-                <div className="text-4xl font-bold text-black mt-4 mb-2">
-                  {plan.price}<span className="text-sm font-normal text-neutral-400"> {plan.unit}</span>
+                <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--text-subtle)' }}>{plan.name}</span>
+                <div className="text-4xl font-bold mt-4 mb-2" style={{ color: 'var(--text-primary)' }}>
+                  {plan.price}<span className="text-sm font-normal" style={{ color: 'var(--text-subtle)' }}> {plan.unit}</span>
                 </div>
-                <p className="text-xs text-brand-desc mb-6">{plan.delivery} &middot; {plan.revisions}</p>
+                <p className="text-xs mb-6" style={{ color: 'var(--text-secondary)' }}>{plan.delivery} &middot; {plan.revisions}</p>
                 <ul className="space-y-3 mb-8">
                   {plan.features.map((f, i) => (
-                    <li key={i} className="text-sm text-neutral-700 flex items-start gap-2">
+                    <li key={i} className="text-sm flex items-start gap-2" style={{ color: 'var(--text-neutral-700)' }}>
                       <div className="w-1.5 h-1.5 rounded-full bg-brand-greenLight mt-1.5 shrink-0" /> {f}
                     </li>
                   ))}
@@ -692,8 +782,9 @@ function App() {
                 className={`w-full py-4 rounded-full text-sm font-medium uppercase tracking-wider transition-all duration-200 ${
                   hoveredCard === plan.name
                     ? 'bg-brand-green text-white shadow-md hover:bg-neutral-800'
-                    : 'border border-brand-borderLight text-black hover:border-neutral-400'
+                    : 'hover:border-neutral-400'
                 }`}
+                style={hoveredCard !== plan.name ? { border: '1px solid var(--border-color)', color: 'var(--text-primary)' } : {}}
               >
                 {plan.cta}
               </button>
@@ -701,18 +792,18 @@ function App() {
           ))}
         </div>
 
-        <p className="text-xs text-brand-desc text-center max-w-lg mx-auto">
+        <p className="text-xs text-center max-w-lg mx-auto" style={{ color: 'var(--text-secondary)' }}>
           Additional revisions available as paid add-on. Rush delivery available on request.
         </p>
       </section>
 
       {/* CONTACT FORM SECTION */}
-      <section id="contact-anchor" className="relative z-10 bg-white border-t border-brand-borderLight py-24 px-6 sm:px-12 max-w-4xl mx-auto w-full">
-        <div className="bg-brand-bannerBg border border-brand-borderLight rounded-[36px] p-8 md:p-16 text-center">
-          <h2 className="text-4xl font-semibold text-black tracking-tight mb-4">
+      <section id="contact-anchor" className="relative z-10 border-t py-24 px-6 sm:px-12 max-w-4xl mx-auto w-full" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
+        <div className="rounded-[36px] p-8 md:p-16 text-center" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+          <h2 className="text-4xl font-semibold tracking-tight mb-4" style={{ color: 'var(--text-primary)' }}>
             Ready to look <span className="italic font-serif text-brand-greenLight">expensive?</span>
           </h2>
-          <p className="text-brand-desc text-sm max-w-md mx-auto mb-10">
+          <p className="text-sm max-w-md mx-auto mb-10" style={{ color: 'var(--text-secondary)' }}>
             Submit your transmission below. We will render a free visual proof of your product — no contract required.
           </p>
 
@@ -727,14 +818,16 @@ function App() {
                 name="name" 
                 placeholder="Your Name" 
                 required 
-                className="w-full bg-white border border-brand-borderLight rounded-full px-6 py-4 text-sm text-black outline-none focus:border-brand-greenLight transition-colors"
+                className="w-full rounded-full px-6 py-4 text-sm outline-none focus:border-brand-greenLight transition-colors"
+                style={{ backgroundColor: 'var(--input-bg)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
               <input 
                 type="text" 
                 name="contact" 
                 placeholder="Email or WhatsApp" 
                 required 
-                className="w-full bg-white border border-brand-borderLight rounded-full px-6 py-4 text-sm text-black outline-none focus:border-brand-greenLight transition-colors"
+                className="w-full rounded-full px-6 py-4 text-sm outline-none focus:border-brand-greenLight transition-colors"
+                style={{ backgroundColor: 'var(--input-bg)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
               />
             </div>
             
@@ -743,7 +836,8 @@ function App() {
               placeholder="Describe your product, or highlight details about your query..." 
               required
               rows="4"
-              className="w-full bg-white border border-brand-borderLight rounded-3xl px-6 py-4 text-sm text-black outline-none resize-none focus:border-brand-greenLight transition-colors"
+              className="w-full rounded-3xl px-6 py-4 text-sm outline-none resize-none focus:border-brand-greenLight transition-colors"
+              style={{ backgroundColor: 'var(--input-bg)', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
             />
             
             <button 
@@ -757,9 +851,9 @@ function App() {
       </section>
 
       {/* FOOTER */}
-      <footer className="relative z-10 bg-white border-t border-brand-borderLight py-12 px-6 sm:px-12 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-        <span className="text-lg font-semibold tracking-tight text-black">Vizara Studio</span>
-        <span className="text-xs text-neutral-400">&copy; 2026 Vizara Studio. All rights reserved. Created via Orbital Operations.</span>
+      <footer className="relative z-10 border-t py-12 px-6 sm:px-12 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
+        <span className="text-lg font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>Vizara Studio</span>
+        <span className="text-xs" style={{ color: 'var(--text-subtle)' }}>&copy; 2026 Vizara Studio. All rights reserved. Created via Orbital Operations.</span>
       </footer>
 
     </div>

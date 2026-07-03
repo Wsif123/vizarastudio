@@ -78,6 +78,12 @@
       padding: 10px 14px; border-radius: 14px; font-size: 14px;
       border-bottom-left-radius: 4px;
     }
+    html.dark #vizara-panel { background: #1f2937; }
+    html.dark #vizara-messages { background: #111827; }
+    html.dark .vizara-bot { background: #1f2937; color: #f3f4f6; }
+    html.dark #vizara-input-area { background: #1f2937; border-top-color: #374151; }
+    html.dark #vizara-input { background: #374151; border-color: #4b5563; color: #f3f4f6; }
+    html.dark .vizara-typing { background: #374151; color: #9ca3af; }
   `;
 
   const SESSION_ID = "viz_" + Math.random().toString(36).slice(2, 10) + "_" + Date.now();
