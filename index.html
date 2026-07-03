@@ -302,71 +302,10 @@ function App() {
   const [activeTab, setActiveTab] = useState('video');
   const [hoveredCard, setHoveredCard] = useState(null);
   const [showNav, setShowNav] = useState(true);
-  const videoRef = useRef(null);
   const lastScrollY = useRef(0);
 
   // Typewriter Setup
   const { displayed, done } = useTypewriter("we'd love to\nhear from you!", 38, 600);
-
-  // Desktop Mouse Scrubbing Hook
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    const previousX = { current: null };
-
-    const handleMouseMove = (e) => {
-      if (window.innerWidth < 1024) return;
-      if (previousX.current === null) {
-        previousX.current = e.clientX;
-        return;
-      }
-      
-      const delta = e.clientX - previousX.current;
-      previousX.current = e.clientX;
-
-      if (!video.duration) return;
-
-      // Update Target Scrub Time based on mouse move speed and screen size
-      const change = (delta / window.innerWidth) * 0.8 * video.duration;
-      let targetTime = video.currentTime + change;
-      targetTime = Math.max(0, Math.min(video.duration, targetTime));
-
-      video.currentTime = targetTime;
-    };
-
-    const handleMouseEnter = () => {
-      previousX.current = null;
-    };
-
-    const handleSeeked = () => {
-      // Seeked callback to ensure smooth frame-by-frame rendering
-    };
-
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseenter', handleMouseEnter);
-    video.addEventListener('seeked', handleSeeked);
-
-    return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseenter', handleMouseEnter);
-      video.removeEventListener('seeked', handleSeeked);
-    };
-  }, []);
-
-  // Mobile Autoplay Hook
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (window.innerWidth < 1024) {
-      video.autoplay = true;
-      video.muted = true;
-      video.playsInline = true;
-      video.loop = true;
-      video.play().catch(err => console.log("Mobile video autoplay prevented:", err));
-    }
-  }, []);
 
   // Nav hide-on-scroll
   useEffect(() => {
@@ -409,17 +348,7 @@ function App() {
       
       <ParticleField />
       
-      {/* Background Video Component */}
-      <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none bg-neutral-50">
-        <video 
-          ref={videoRef}
-          className="w-full h-full object-cover object-left"
-          muted
-          playsInline
-          preload="auto"
-          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260601_110537_3a579fa0-7bbc-4d94-9d25-0e816c7840f5.mp4"
-        />
-      </div>
+
 
       {/* Interactive Navbar Header */}
       <header className={`fixed top-0 inset-x-0 z-50 px-5 sm:px-8 py-4 sm:py-5 flex flex-row justify-between items-center bg-white/90 backdrop-blur-sm transition-transform duration-300 ${
