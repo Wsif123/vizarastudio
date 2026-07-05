@@ -425,7 +425,117 @@ const Hero3D = () => {
 };
 
 // ==========================================
-// 5. MAIN APP COMPONENT
+// 5. PROCESS RINGS COMPONENT (ambient 3D accent)
+// ==========================================
+const ProcessRings = () => {
+  const mountRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = mountRef.current;
+    if (!canvas || typeof THREE === 'undefined') return;
+
+    const scene = new THREE.Scene();
+
+    const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    camera.position.z = 5;
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(300, 300);
+
+    const ambient = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambient);
+    const dir1 = new THREE.DirectionalLight(0xf5b04a, 1);
+    dir1.position.set(2, 3, 4);
+    scene.add(dir1);
+    const dir2 = new THREE.DirectionalLight(0x7a6a50, 0.5);
+    dir2.position.set(-3, -1, 2);
+    scene.add(dir2);
+
+    const geo = new THREE.BoxGeometry(1.2, 1.2, 1.2);
+    const mat = new THREE.MeshPhysicalMaterial({
+      color: 0xe8a33d,
+      roughness: 0.08,
+      metalness: 0.1,
+      transmission: 0.75,
+      thickness: 1.0,
+      ior: 1.5,
+      clearcoat: 1,
+      clearcoatRoughness: 0.05,
+      transparent: true,
+      opacity: 0.95,
+    });
+    const cube = new THREE.Mesh(geo, mat);
+    cube.castShadow = true;
+
+    const group = new THREE.Group();
+    group.add(cube);
+    scene.add(group);
+
+    const ringConfigs = [
+      { radius: 1.8, speed: 0.4, tiltX: Math.PI / 2.5, color: 0xf5b04a, emissiveIntensity: 2 },
+      { radius: 2.2, speed: -0.25, tiltX: Math.PI / 1.8, color: 0xd4892a, emissiveIntensity: 1.4 },
+      { radius: 2.6, speed: 0.15, tiltX: Math.PI / 3, color: 0xc77f2a, emissiveIntensity: 1 },
+    ];
+
+    ringConfigs.forEach((cfg) => {
+      const rMat = new THREE.MeshStandardMaterial({
+        color: cfg.color,
+        emissive: cfg.color,
+        emissiveIntensity: cfg.emissiveIntensity,
+        transparent: true,
+        opacity: 0.5,
+        toneMapped: false,
+      });
+      const rGeo = new THREE.TorusGeometry(cfg.radius, 0.015, 16, 128);
+      const ring = new THREE.Mesh(rGeo, rMat);
+      group.add(ring);
+      ring.userData = cfg;
+    });
+
+    let animId;
+    const animate = () => {
+      animId = requestAnimationFrame(animate);
+      const t = performance.now() / 1000;
+
+      group.rotation.x = Math.sin(t * 0.2) * 0.1;
+      group.rotation.y = t * 0.3;
+
+      cube.position.y = Math.sin(t * 0.6) * 0.15;
+
+      group.children.forEach((child) => {
+        if (child.isMesh && child !== cube && child.userData.radius) {
+          const cfg = child.userData;
+          child.rotation.z = t * cfg.speed;
+          child.rotation.x = cfg.tiltX + Math.sin(t * 0.4) * 0.05;
+        }
+      });
+
+      renderer.render(scene, camera);
+    };
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      geo.dispose();
+      mat.dispose();
+      renderer.dispose();
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={mountRef}
+      width={300}
+      height={300}
+      className="pointer-events-none"
+      style={{ display: 'block' }}
+    />
+  );
+};
+
+// ==========================================
+// 6. MAIN APP COMPONENT
 // ==========================================
 function App() {
   const [selectedServices, setSelectedServices] = useState([]);
@@ -780,8 +890,14 @@ function App() {
       </section>
 
       {/* PROCESS SECTION */}
-      <section id="process" className="relative z-10 border-t py-24 px-6 sm:px-12 max-w-7xl mx-auto w-full" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
-        <div className="mb-16 text-center">
+      <section id="process" className="relative z-10 border-t py-24 px-6 sm:px-12 max-w-7xl mx-auto w-full overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
+        
+        {/* Ambient 3D accent behind content */}
+        <div className="absolute inset-0 flex justify-center items-center pointer-events-none z-0 opacity-30 md:opacity-40">
+          <ProcessRings />
+        </div>
+        
+        <div className="relative z-10 mb-16 text-center">
           <span className="text-xs font-semibold tracking-widest text-brand-greenLight uppercase py-1.5 px-4 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
             The Orbital Process
           </span>
@@ -790,7 +906,7 @@ function App() {
           </h2>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12 rounded-[36px] p-8 md:p-12" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+        <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-12 rounded-[36px] p-8 md:p-12" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
           <div className="flex flex-col">
             <span className="text-5xl font-light text-brand-greenLight/60 mb-6 font-serif italic">01</span>
             <h3 className="text-xl font-medium mb-3" style={{ color: 'var(--text-primary)' }}>Send your product details</h3>
