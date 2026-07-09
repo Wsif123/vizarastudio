@@ -269,163 +269,7 @@ const PortfolioCard = ({ img, brand, type, tag, video }) => {
 };
 
 // ==========================================
-// 4. HERO 3D COMPONENT (Three.js scene)
-// ==========================================
-const Hero3D = () => {
-  const mountRef = useRef(null);
-
-  useEffect(() => {
-    const canvas = mountRef.current;
-    if (!canvas || typeof THREE === 'undefined') return;
-
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#141210');
-    scene.fog = new THREE.Fog('#141210', 10, 22);
-
-    const camera = new THREE.PerspectiveCamera(45, canvas.clientWidth / canvas.clientHeight, 0.1, 100);
-    camera.position.z = 7;
-
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
-    renderer.shadowMap.enabled = true;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-
-    const ambient = new THREE.AmbientLight(0xffffff, 0.25);
-    scene.add(ambient);
-
-    const spotLight = new THREE.SpotLight(0xf5b04a, 120, 20, 0.4, 1);
-    spotLight.position.set(4, 8, 6);
-    spotLight.castShadow = true;
-    scene.add(spotLight);
-
-    const pointLight = new THREE.PointLight(0x7a6a50, 20, 20);
-    pointLight.position.set(-6, 2, -4);
-    scene.add(pointLight);
-
-    const dirLight = new THREE.DirectionalLight(0xfff4e0, 0.6);
-    dirLight.position.set(0, 5, 5);
-    scene.add(dirLight);
-
-    const geo = new THREE.IcosahedronGeometry(1.2, 1);
-    const mat = new THREE.MeshPhysicalMaterial({
-      color: 0xe8a33d,
-      roughness: 0.12,
-      metalness: 0.1,
-      transmission: 0.7,
-      thickness: 1.2,
-      ior: 1.4,
-      clearcoat: 1,
-      clearcoatRoughness: 0.1,
-    });
-    const mainMesh = new THREE.Mesh(geo, mat);
-    mainMesh.castShadow = true;
-
-    const group = new THREE.Group();
-    group.add(mainMesh);
-    scene.add(group);
-
-    const ringMat = new THREE.MeshStandardMaterial({
-      color: 0xf5b04a,
-      emissive: 0xf5b04a,
-      emissiveIntensity: 2,
-      toneMapped: false,
-    });
-    const ringGeo = new THREE.TorusGeometry(1.6, 0.015, 16, 128);
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    group.add(ring);
-
-    const ring2Mat = new THREE.MeshStandardMaterial({
-      color: 0xf5b04a,
-      emissive: 0xc77f2a,
-      emissiveIntensity: 1.2,
-      toneMapped: false,
-    });
-    const ring2Geo = new THREE.TorusGeometry(2.0, 0.008, 16, 128);
-    const ring2 = new THREE.Mesh(ring2Geo, ring2Mat);
-    group.add(ring2);
-
-    const starCount = 1200;
-    const starPositions = new Float32Array(starCount * 3);
-    for (let i = 0; i < starCount * 3; i++) {
-      starPositions[i] = (Math.random() - 0.5) * 120;
-    }
-    const starsGeo = new THREE.BufferGeometry();
-    starsGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-    const starsMat = new THREE.PointsMaterial({
-      color: 0xffffff,
-      size: 0.15,
-      transparent: true,
-      opacity: 0.6,
-    });
-    const stars = new THREE.Points(starsGeo, starsMat);
-    scene.add(stars);
-
-    const mouse = { x: 0, y: 0 };
-    const handleMouseMove = (e) => {
-      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-
-    const handleResize = () => {
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    };
-    window.addEventListener('resize', handleResize);
-
-    let animId;
-    const animate = () => {
-      animId = requestAnimationFrame(animate);
-      const t = performance.now() / 1000;
-
-      group.rotation.y = t * 0.15;
-
-      ring.rotation.z = t * 0.4;
-      ring.rotation.x = Math.PI / 2.3 + Math.sin(t * 0.3) * 0.1;
-      ring2.rotation.z = -t * 0.25;
-      ring2.rotation.x = Math.PI / 1.8 + Math.cos(t * 0.4) * 0.15;
-
-      camera.position.x += (mouse.x * 0.6 - camera.position.x) * 0.05;
-      camera.position.y += (mouse.y * 0.4 - camera.position.y) * 0.05;
-      camera.lookAt(0, 0, 0);
-
-      stars.rotation.y += 0.0003;
-
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('resize', handleResize);
-      mat.dispose();
-      geo.dispose();
-      ringMat.dispose();
-      ringGeo.dispose();
-      ring2Mat.dispose();
-      ring2Geo.dispose();
-      starsMat.dispose();
-      starsGeo.dispose();
-      renderer.dispose();
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={mountRef}
-      className="absolute inset-0 w-full h-full pointer-events-none"
-      style={{ display: 'block' }}
-    />
-  );
-};
-
-// ==========================================
-// 5. PROCESS RINGS COMPONENT (ambient 3D accent)
+// 4. PROCESS RINGS COMPONENT (ambient 3D accent)
 // ==========================================
 const ProcessRings = () => {
   const mountRef = useRef(null);
@@ -704,123 +548,119 @@ function App() {
         </a>
       </div>
 
-      {/* Hero Section with 3D Background */}
-      <div className="relative min-h-screen overflow-hidden">
-        <Hero3D />
-        <div className="absolute inset-0 z-[2] bg-gradient-to-b from-black/60 via-black/40 to-black/60" />
-        <div className="relative z-10 flex flex-col order-first lg:order-none w-full pb-8 lg:pb-0 lg:min-h-screen">
-          <main id="spade-hero" className="w-full max-w-7xl mx-auto px-6 pt-32 pb-16 lg:py-12 flex-1 flex flex-col justify-center">
+      {/* Content Layout Container */}
+      <div className="relative z-10 flex flex-col order-first lg:order-none w-full pb-8 lg:pb-0 lg:min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+        <main id="spade-hero" className="w-full max-w-7xl mx-auto px-6 pt-32 pb-16 lg:py-12 flex-1 flex flex-col justify-center">
+          
+          {/* Headline drop-in animation */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="w-full"
+          >
+            <h1 className="text-5xl md:text-6xl lg:text-[76px] font-normal tracking-tight leading-[1.08] mb-8 select-none w-full whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>
+              {displayed}
+              {!done && (
+                <span className="inline-block w-[2px] h-[1.1em] align-middle ml-[2px] animate-blink" style={{ backgroundColor: 'var(--text-primary)' }} />
+              )}
+            </h1>
+          </motion.div>
+
+          {/* Secondary Description text */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
+            <p className="text-lg md:text-xl leading-relaxed font-normal mb-14 max-w-2xl" style={{ color: 'var(--text-secondary)' }}>
+              Whether you have questions, feedback, <br /> drop us a message and we'll get back to you as soon as possible.
+            </p>
+          </motion.div>
+
+          {/* Interactive Multi-Select Service Pills */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="w-full max-w-2xl"
+          >
+            <h3 className="text-2xl font-medium tracking-tight mb-2" style={{ color: 'var(--text-primary)' }}>What sort of service?</h3>
+            <p className="opacity-85 mb-8" style={{ color: 'var(--text-secondary)' }}>Select all that apply</p>
             
-            {/* Headline drop-in animation */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="w-full"
-            >
-              <h1 className="text-5xl md:text-6xl lg:text-[76px] font-normal tracking-tight leading-[1.08] mb-8 select-none w-full whitespace-pre-wrap" style={{ color: '#f5f0eb' }}>
-                {displayed}
-                {!done && (
-                  <span className="inline-block w-[2px] h-[1.1em] align-middle ml-[2px] animate-blink" style={{ backgroundColor: '#f5f0eb' }} />
+            <div className="flex flex-wrap gap-3 mb-8">
+              {serviceOptions.map((opt) => {
+                const isActive = selectedServices.includes(opt);
+                return (
+                  <motion.button
+                    key={opt}
+                    onClick={() => toggleService(opt)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all duration-200 ${
+                      isActive 
+                        ? 'bg-brand-green text-white shadow-md shadow-emerald-950/5' 
+                        : 'text-brand-green'
+                    }`}
+                    style={isActive ? {} : { backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}
+                  >
+                    <AnimatePresence>
+                      {isActive && (
+                        <motion.span
+                          initial={{ opacity: 0, scale: 0 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        >
+                          <CheckIcon />
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                    {opt}
+                  </motion.button>
+                );
+              })}
+            </div>
+
+            {/* Contingent Feedback Status Banner */}
+            <div className="h-16 flex items-start">
+              <AnimatePresence mode="wait">
+                {selectedServices.length === 0 ? (
+                  <motion.p
+                    key="empty"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 0.5 }}
+                    exit={{ opacity: 0 }}
+                    className="italic text-xs font-normal" style={{ color: 'var(--text-muted)' }}
+                  >
+                    Please click to select services above.
+                  </motion.p>
+                ) : (
+                  <motion.div
+                    key="selected"
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                    className="w-full rounded-2xl p-4 flex flex-row justify-between items-center"
+                    style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}
+                  >
+                    <span className="text-xs font-medium" style={{ color: 'var(--text-neutral-800)' }}>
+                      Ready to inquire about: <strong style={{ color: 'var(--text-primary)' }}>{selectedServices.join(", ")}</strong>
+                    </span>
+                    <button 
+                      onClick={() => document.getElementById('contact-anchor').scrollIntoView({behavior:'smooth'})}
+                      className="text-brand-greenLight uppercase text-xs font-bold tracking-wider hover:opacity-75 flex items-center gap-1"
+                    >
+                      Let's Go &rarr;
+                    </button>
+                  </motion.div>
                 )}
-              </h1>
-            </motion.div>
+              </AnimatePresence>
+            </div>
+          </motion.div>
 
-            {/* Secondary Description text */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              <p className="text-lg md:text-xl leading-relaxed font-normal mb-14 max-w-2xl" style={{ color: 'rgba(245, 240, 235, 0.7)' }}>
-                Whether you have questions, feedback, <br /> drop us a message and we'll get back to you as soon as possible.
-              </p>
-            </motion.div>
-
-            {/* Interactive Multi-Select Service Pills */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="w-full max-w-2xl"
-            >
-              <h3 className="text-2xl font-medium tracking-tight mb-2" style={{ color: '#f5f0eb' }}>What sort of service?</h3>
-              <p className="opacity-85 mb-8" style={{ color: 'rgba(245, 240, 235, 0.6)' }}>Select all that apply</p>
-              
-              <div className="flex flex-wrap gap-3 mb-8">
-                {serviceOptions.map((opt) => {
-                  const isActive = selectedServices.includes(opt);
-                  return (
-                    <motion.button
-                      key={opt}
-                      onClick={() => toggleService(opt)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium transition-all duration-200 ${
-                        isActive 
-                          ? 'bg-brand-green text-white shadow-md shadow-emerald-950/5' 
-                          : ''
-                      }`}
-                      style={isActive ? {} : { backgroundColor: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(245,240,235,0.9)' }}
-                    >
-                      <AnimatePresence>
-                        {isActive && (
-                          <motion.span
-                            initial={{ opacity: 0, scale: 0 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0 }}
-                            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                          >
-                            <CheckIcon />
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
-                      {opt}
-                    </motion.button>
-                  );
-                })}
-              </div>
-
-              {/* Contingent Feedback Status Banner */}
-              <div className="h-16 flex items-start">
-                <AnimatePresence mode="wait">
-                  {selectedServices.length === 0 ? (
-                    <motion.p
-                      key="empty"
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 0.5 }}
-                      exit={{ opacity: 0 }}
-                      className="italic text-xs font-normal" style={{ color: 'rgba(245, 240, 235, 0.5)' }}
-                    >
-                      Please click to select services above.
-                    </motion.p>
-                  ) : (
-                    <motion.div
-                      key="selected"
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                      className="w-full rounded-2xl p-4 flex flex-row justify-between items-center"
-                      style={{ backgroundColor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}
-                    >
-                      <span className="text-xs font-medium" style={{ color: 'rgba(245, 240, 235, 0.8)' }}>
-                        Ready to inquire about: <strong style={{ color: '#f5f0eb' }}>{selectedServices.join(", ")}</strong>
-                      </span>
-                      <button 
-                        onClick={() => document.getElementById('contact-anchor').scrollIntoView({behavior:'smooth'})}
-                        className="text-brand-greenLight uppercase text-xs font-bold tracking-wider hover:opacity-75 flex items-center gap-1"
-                      >
-                        Let's Go &rarr;
-                      </button>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div>
-            </motion.div>
-
-          </main>
-        </div>
+        </main>
       </div>
 
       {/* PORTFOLIO SECTION */}
