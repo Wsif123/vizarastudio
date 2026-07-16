@@ -149,7 +149,7 @@
       fetch(BACKEND_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: SESSION_ID, query: text }),
+        body: JSON.stringify({ session_id: SESSION_ID, query: text, client_id: "vizara" }),
       })
         .then((r) => r.json())
         .then((data) => {
