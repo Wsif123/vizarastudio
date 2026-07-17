@@ -71,8 +71,8 @@
       display: flex; flex-direction: column; gap: 8px;
     }
     .vizara-msg {
-      max-width: 85%; padding: 10px 14px; border-radius: 14px;
-      font-size: 14px; line-height: 1.5;
+      max-width: 85%; padding: 12px 16px; border-radius: 14px;
+      font-size: 14px; line-height: 1.6;
       word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;
       white-space: pre-wrap;
     }
