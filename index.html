@@ -386,6 +386,7 @@ function App() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('video');
   const [hoveredCard, setHoveredCard] = useState(null);
+  const [chatHoveredCard, setChatHoveredCard] = useState(null);
   const [showNav, setShowNav] = useState(true);
   const [theme, setTheme] = useState(() => localStorage.getItem('vizara-theme') || 'light');
   const lastScrollY = useRef(0);
@@ -428,6 +429,11 @@ function App() {
     { name: 'Premium', price: '$100', unit: '/ 5 photos', delivery: '1-day delivery', revisions: 'Unlimited revisions', cta: 'Get Started', popular: false, features: ['5 photos, 1 product', 'Lifestyle staging + styling + retouching + lighting + background removal'] },
   ];
 
+  const chatBotPlans = [
+    { name: 'Standard', price: '$49', unit: '/ mo', delivery: '2–3 day delivery', revisions: '1 revision', cta: 'Get Started', popular: false, features: ['Up to ~15 pages/FAQ worth of content', 'Default widget styling, brand colors only', 'Standard tone/persona', 'Email escalation handoff', '+ $75 one-time setup'] },
+    { name: 'Premium', price: '$79', unit: '/ mo', delivery: '3–5 day delivery', revisions: 'Priority updates', cta: 'Get Started', popular: true, features: ['Up to ~40 pages/FAQ worth of content', 'Fully brand-matched widget (colors, fonts, positioning)', 'Custom persona/tone tuning', 'Monthly usage summary', '+ $130 one-time setup'] },
+  ];
+
   // Toggle Services selections
   const toggleService = (opt) => {
     setSelectedServices(prev => 
@@ -467,6 +473,8 @@ function App() {
           <a href="#process" className="hover:opacity-60 transition-opacity">Process</a>
           <span className="opacity-40">,&nbsp;</span>
           <a href="#pricing" className="hover:opacity-60 transition-opacity">Pricing</a>
+          <span className="opacity-40">,&nbsp;</span>
+          <a href="#chatbots" className="hover:opacity-60 transition-opacity">AI Chatbots</a>
           <span className="opacity-40">,&nbsp;</span>
           <a href="#contact-anchor" className="hover:opacity-60 transition-opacity">Contact</a>
         </div>
@@ -538,6 +546,13 @@ function App() {
           className="text-3xl font-semibold hover:opacity-60" style={{ color: 'var(--text-primary)' }}
         >
           Pricing
+        </a>
+        <a 
+          href="#chatbots" 
+          onClick={() => setIsMobileMenuOpen(false)}
+          className="text-3xl font-semibold hover:opacity-60" style={{ color: 'var(--text-primary)' }}
+        >
+          AI Chatbots
         </a>
         <a 
           href="#contact-anchor" 
@@ -821,6 +836,81 @@ function App() {
         <p className="text-xs text-center max-w-lg mx-auto" style={{ color: 'var(--text-secondary)' }}>
           Additional revisions available as paid add-on. Rush delivery available on request.
         </p>
+      </section>
+
+      {/* AI CHATBOTS SECTION */}
+      <section id="chatbots" className="relative z-10 border-t py-24 px-6 sm:px-12 max-w-7xl mx-auto w-full" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
+        <div className="mb-12 text-center">
+          <span className="text-xs font-semibold tracking-widest text-brand-greenLight uppercase py-1.5 px-4 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+            AI Chatbots
+          </span>
+          <h2 className="text-4xl md:text-5xl font-semibold tracking-tight mt-6" style={{ color: 'var(--text-primary)' }}>
+            We also build AI chatbots for your website.
+          </h2>
+          <p className="text-sm max-w-xl mx-auto mt-4" style={{ color: 'var(--text-secondary)' }}>
+            Train a bot on your own content — FAQs, pricing, policies — and let it answer customer questions 24/7. Escalates to a human when it doesn't know.
+          </p>
+        </div>
+
+        {/* Chatbot Pricing Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-3xl mx-auto mb-12">
+          {chatBotPlans.map((plan, idx) => (
+            <div
+              key={plan.name}
+              onMouseEnter={() => setChatHoveredCard(plan.name)}
+              onMouseLeave={() => setChatHoveredCard(null)}
+              className={`relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
+                chatHoveredCard === plan.name
+                  ? 'border-2 border-brand-greenLight shadow-xl'
+                  : ''
+              }`}
+              style={chatHoveredCard === plan.name ? { backgroundColor: 'var(--bg-secondary)' } : { border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}
+            >
+              {plan.popular && (
+                <span className="absolute top-6 right-6 text-[10px] font-bold tracking-wider text-brand-greenLight uppercase bg-brand-greenLight/10 border border-brand-greenLight/20 py-1 px-3 rounded-full">
+                  Most Popular
+                </span>
+              )}
+              <div>
+                <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--text-subtle)' }}>{plan.name}</span>
+                <div className="text-4xl font-bold mt-4 mb-2" style={{ color: 'var(--text-primary)' }}>
+                  {plan.price}<span className="text-sm font-normal" style={{ color: 'var(--text-subtle)' }}> {plan.unit}</span>
+                </div>
+                <p className="text-xs mb-6" style={{ color: 'var(--text-secondary)' }}>{plan.delivery} &middot; {plan.revisions}</p>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((f, i) => (
+                    <li key={i} className="text-sm flex items-start gap-2" style={{ color: 'var(--text-neutral-700)' }}>
+                      <div className="w-1.5 h-1.5 rounded-full bg-brand-greenLight mt-1.5 shrink-0" /> {f}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <button
+                onClick={() => document.getElementById('contact-anchor').scrollIntoView({behavior:'smooth'})}
+                className={`w-full py-4 rounded-full text-sm font-medium uppercase tracking-wider transition-all duration-200 ${
+                  chatHoveredCard === plan.name
+                    ? 'bg-brand-green text-white shadow-md hover:bg-neutral-800'
+                    : 'hover:border-neutral-400'
+                }`}
+                style={chatHoveredCard !== plan.name ? { border: '1px solid var(--border-color)', color: 'var(--text-primary)' } : {}}
+              >
+                {plan.cta}
+              </button>
+            </div>
+          ))}
+        </div>
+
+        {/* Demo video embed slot */}
+        <div className="max-w-2xl mx-auto rounded-3xl overflow-hidden" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+          <div className="aspect-video flex items-center justify-center" style={{ backgroundColor: 'var(--neutral-100)' }}>
+            <p className="text-xs" style={{ color: 'var(--text-subtle)' }}>Demo video coming soon</p>
+          </div>
+          <div className="p-6 text-center">
+            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+              See how a Vizara AI chatbot works live — instant answers, brand-matched, human handoff when needed.
+            </p>
+          </div>
+        </div>
       </section>
 
       {/* CONTACT FORM SECTION */}
