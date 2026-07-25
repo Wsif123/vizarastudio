@@ -407,6 +407,7 @@ function CoverflowCard({
 }) {
   const src = item.img || "";
   const isVideo = !!item.video;
+  const itemAr = item.ar || 1.5;
 
   const x = useTransform(pos, (p) => cfXForRel(cfRelOf(index, p, count), sizing, gap));
   const opacity = useTransform(pos, (p) => {
@@ -415,8 +416,10 @@ function CoverflowCard({
   });
   const zIndex = useTransform(pos, (p) => Math.round(1000 - Math.abs(cfRelOf(index, p, count)) * 100));
   const wVal = useTransform(pos, (p) => {
-    const a = cfBlendForRel(cfRelOf(index, p, count));
-    return sizing.activeWidth + (sizing.restWidth - sizing.activeWidth) * a;
+    const rel = cfRelOf(index, p, count);
+    const a = cfBlendForRel(rel);
+    const activeW = sizing.activeHeight * itemAr;
+    return activeW + (sizing.restWidth - activeW) * a;
   });
   const hVal = useTransform(pos, (p) => {
     const a = cfBlendForRel(cfRelOf(index, p, count));
@@ -441,8 +444,8 @@ function CoverflowCard({
       React.createElement(
         "div", { style: { width: "100%", height: "100%", overflow: "hidden", position: "relative" } },
         isVideo
-          ? React.createElement("video", { src: item.video, muted: true, autoPlay: true, loop: true, playsInline: true, style: { width: "100%", height: "100%", objectFit: "contain", display: "block", pointerEvents: "none", userSelect: "none", background: "var(--neutral-100)" } })
-          : React.createElement("img", { src: src, alt: item.brand || "", draggable: false, style: { width: "100%", height: "100%", objectFit: "contain", display: "block", pointerEvents: "none", userSelect: "none", background: "var(--neutral-100)" } }),
+          ? React.createElement("video", { src: item.video, muted: true, autoPlay: true, loop: true, playsInline: true, style: { width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none", userSelect: "none" } })
+          : React.createElement("img", { src: src, alt: item.brand || "", draggable: false, style: { width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none", userSelect: "none" } }),
         React.createElement(
           cfMotion.div,
           {
@@ -680,14 +683,14 @@ function App() {
   };
 
   const portfolioItems = [
-    { img: "https://i.ibb.co/V0DZc1mB/1000070745.png", brand: "Shoop Korean Noodles", type: "Culinary Atlas Campaign", tag: "Food & Beverage" },
-    { img: "https://i.ibb.co/JWT0b9Z7/1000070646.png", brand: "Shezan Pomegranate", type: "Luxury Splash Campaign", tag: "Beverages" },
-    { img: "https://i.ibb.co/vpfkX3h/1000070675-1.jpg", brand: "Hemani Venturous", type: "Dark Botanical Fragrance", tag: "Beauty & Fragrance" },
-    { video: "/assets/apple-headphones-ad.mp4", brand: "Apple Headphones", type: "Cinematic Tech Campaign", tag: "Tech & Audio" },
-    { video: "/assets/shezan-pomegranate-ad.mp4", brand: "Shezan Pomegranate", type: "Luxury Splash Campaign", tag: "Beverages" },
-    { img: "/assets/starbuck-coffee.jpg", brand: "Starbucks Coffee", type: "Artisan Beverage Campaign", tag: "Food & Beverage" },
-    { img: "/assets/velora-handbag.jpg", brand: "Velora Handbag", type: "Luxury Accessories Campaign", tag: "Fashion & Accessories" },
-    { img: "/assets/zelpor-shoes.png", brand: "Zelpor Shoes", type: "Premium Footwear Campaign", tag: "Footwear" },
+    { img: "https://i.ibb.co/V0DZc1mB/1000070745.png", brand: "Shoop Korean Noodles", type: "Culinary Atlas Campaign", tag: "Food & Beverage", ar: 0.75 },
+    { img: "https://i.ibb.co/JWT0b9Z7/1000070646.png", brand: "Shezan Pomegranate", type: "Luxury Splash Campaign", tag: "Beverages", ar: 0.75 },
+    { img: "https://i.ibb.co/vpfkX3h/1000070675-1.jpg", brand: "Hemani Venturous", type: "Dark Botanical Fragrance", tag: "Beauty & Fragrance", ar: 0.75 },
+    { video: "/assets/apple-headphones-ad.mp4", brand: "Apple Headphones", type: "Cinematic Tech Campaign", tag: "Tech & Audio", ar: 1.78 },
+    { video: "/assets/shezan-pomegranate-ad.mp4", brand: "Shezan Pomegranate", type: "Luxury Splash Campaign", tag: "Beverages", ar: 1.78 },
+    { img: "/assets/starbuck-coffee.jpg", brand: "Starbucks Coffee", type: "Artisan Beverage Campaign", tag: "Food & Beverage", ar: 0.75 },
+    { img: "/assets/velora-handbag.jpg", brand: "Velora Handbag", type: "Luxury Accessories Campaign", tag: "Fashion & Accessories", ar: 0.75 },
+    { img: "/assets/zelpor-shoes.png", brand: "Zelpor Shoes", type: "Premium Footwear Campaign", tag: "Footwear", ar: 0.75 },
   ];
 
   const serviceOptions = ["Brand", "Digital", "Campaign", "Other"];
