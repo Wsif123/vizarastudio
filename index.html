@@ -379,6 +379,244 @@ const ProcessRings = () => {
 };
 
 // ==========================================
+// 5. COVERFLOW CAROUSEL (adapted from Originkit)
+// ==========================================
+
+const { motion: cfMotion, useMotionValue, useTransform, useReducedMotion } = window.Motion;
+
+function cfRelOf(index, pos, count) {
+  let rel = (((index - pos) % count) + count) % count;
+  if (rel > count / 2) rel -= count;
+  return rel;
+}
+
+function cfXForRel(rel, s, gap) {
+  const ar = Math.abs(rel);
+  const c1 = s.activeWidth / 2 + gap + s.restWidth / 2;
+  const pitch = s.restWidth + gap;
+  const mag = ar <= 1 ? ar * c1 : c1 + (ar - 1) * pitch;
+  return (rel < 0 ? -1 : 1) * mag;
+}
+
+function cfBlendForRel(rel) {
+  return Math.min(Math.abs(rel), 1);
+}
+
+function CoverflowCard({
+  item, index, pos, count, R, sizing, gap, radius, onSelect
+}) {
+  const src = item.img || "";
+  const isVideo = !!item.video;
+
+  const x = useTransform(pos, (p) => cfXForRel(cfRelOf(index, p, count), sizing, gap));
+  const opacity = useTransform(pos, (p) => {
+    const ar = Math.abs(cfRelOf(index, p, count));
+    return ar <= R ? 1 : ar >= R + 1 ? 0 : 1 - (ar - R);
+  });
+  const zIndex = useTransform(pos, (p) => Math.round(1000 - Math.abs(cfRelOf(index, p, count)) * 100));
+  const wVal = useTransform(pos, (p) => {
+    const a = cfBlendForRel(cfRelOf(index, p, count));
+    return sizing.activeWidth + (sizing.restWidth - sizing.activeWidth) * a;
+  });
+  const hVal = useTransform(pos, (p) => {
+    const a = cfBlendForRel(cfRelOf(index, p, count));
+    return sizing.activeHeight + (sizing.restHeight - sizing.activeHeight) * a;
+  });
+  const showText = useTransform(pos, (p) => Math.abs(cfRelOf(index, p, count)) < 0.8 ? 1 : 0);
+
+  return React.createElement(
+    cfMotion.div,
+    {
+      onClick: onSelect ? () => onSelect(index) : undefined,
+      style: { position: "absolute", left: "50%", top: "50%", x, zIndex, opacity, cursor: onSelect ? "pointer" : "default" },
+    },
+    React.createElement(
+      cfMotion.div,
+      {
+        style: {
+          x: "-50%", y: "-50%", width: wVal, height: hVal, borderRadius: radius,
+          overflow: "hidden", background: "var(--card-bg)", border: "1px solid var(--border-color)",
+        },
+      },
+      React.createElement(
+        "div", { style: { width: "100%", height: "100%", overflow: "hidden", position: "relative" } },
+        isVideo
+          ? React.createElement("video", { src: item.video, muted: true, autoPlay: true, loop: true, playsInline: true, style: { width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none", userSelect: "none" } })
+          : React.createElement("img", { src: src, alt: item.brand || "", draggable: false, style: { width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none", userSelect: "none" } }),
+        React.createElement(
+          cfMotion.div,
+          {
+            style: {
+              opacity: showText, position: "absolute", bottom: 0, left: 0, right: 0,
+              padding: "16px", background: "linear-gradient(transparent, rgba(0,0,0,0.7))", pointerEvents: "none",
+            },
+          },
+          React.createElement("span", { className: "text-[10px] tracking-widest uppercase font-semibold", style: { color: "#4D6D47", backgroundColor: "rgba(250,251,249,0.9)", border: "1px solid var(--border-color)", padding: "2px 10px", borderRadius: "9999px", display: "inline-block", marginBottom: "6px" } }, item.tag),
+          React.createElement("h4", { style: { fontSize: "16px", fontWeight: 500, color: "#fff", margin: "4px 0 2px", textShadow: "0 1px 4px rgba(0,0,0,0.5)" } }, item.brand),
+          React.createElement("p", { style: { fontSize: "12px", color: "rgba(255,255,255,0.8)", textShadow: "0 1px 3px rgba(0,0,0,0.4)" } }, item.type),
+        )
+      )
+    )
+  );
+}
+
+function CoverflowCarousel(props) {
+  const {
+    items: rawItems, activeWidth = 500, activeHeight = 360, restWidth = 140, restHeight = 210,
+    gap = 24, radius = 12, showArrows = true, arrowColor = "#ffffff", arrowBackground = "rgba(0,0,0,0.6)",
+    arrowSize = 48, autoplay = false, autoplayDirection = "rightToLeft", transitionDuration = 0.4,
+    transitionDelay = 1.2, style,
+  } = props;
+
+  const prefersReducedMotion = useReducedMotion();
+  const items = Array.isArray(rawItems) && rawItems.length > 0 ? rawItems : [];
+  const count = Math.max(1, items.length);
+  const sizing = { restWidth, restHeight, activeWidth, activeHeight };
+  const R = Math.max(1, Math.min(6, Math.floor(count / 2) - 1));
+
+  const pos = useMotionValue(0);
+  const targetRef = useRef(0);
+  const rafRef = useRef(null);
+  const lastTRef = useRef(null);
+  const autoplayingRef = useRef(false);
+  const dirRef = useRef(1);
+  const dwellAccRef = useRef(0);
+  const moveDurRef = useRef(transitionDuration);
+  moveDurRef.current = transitionDuration;
+  const dwellRef = useRef(transitionDelay);
+  dwellRef.current = transitionDelay;
+  const reducedRef = useRef(prefersReducedMotion);
+  reducedRef.current = prefersReducedMotion;
+
+  const tick = useCallback((t) => {
+    const last = lastTRef.current ?? t;
+    const dt = Math.min((t - last) / 1000, 1 / 30);
+    lastTRef.current = t;
+    const cur = pos.get();
+    const diff = targetRef.current - cur;
+    const dur = Math.max(0.08, moveDurRef.current);
+    const step = (1 / dur) * dt;
+    const arriving = reducedRef.current || Math.abs(diff) <= step;
+    if (arriving) {
+      pos.set(targetRef.current);
+      if (autoplayingRef.current) {
+        dwellAccRef.current += dt;
+        if (dwellAccRef.current >= Math.max(0, dwellRef.current)) {
+          dwellAccRef.current = 0;
+          targetRef.current += dirRef.current;
+        }
+        rafRef.current = requestAnimationFrame(tick);
+        return;
+      }
+      rafRef.current = null;
+      lastTRef.current = null;
+      return;
+    }
+    pos.set(cur + Math.sign(diff) * step);
+    rafRef.current = requestAnimationFrame(tick);
+  }, [pos]);
+
+  const ensureRunning = useCallback(() => {
+    if (rafRef.current == null) {
+      lastTRef.current = null;
+      rafRef.current = requestAnimationFrame(tick);
+    }
+  }, [tick]);
+
+  const goNext = useCallback(() => { targetRef.current += 1; ensureRunning(); }, [ensureRunning]);
+  const goPrev = useCallback(() => { targetRef.current -= 1; ensureRunning(); }, [ensureRunning]);
+  const goTo = useCallback((index) => {
+    const cur = targetRef.current;
+    let d = index - cur;
+    d = ((d % count) + count) % count;
+    if (d > count / 2) d -= count;
+    targetRef.current = cur + d;
+    ensureRunning();
+  }, [ensureRunning, count]);
+
+  useEffect(() => {
+    return () => { if (rafRef.current != null) cancelAnimationFrame(rafRef.current); rafRef.current = null; };
+  }, []);
+
+  useEffect(() => {
+    const on = autoplay && count > 1;
+    autoplayingRef.current = on;
+    if (on) {
+      dirRef.current = autoplayDirection === "leftToRight" ? -1 : 1;
+      dwellAccRef.current = 0;
+      ensureRunning();
+    }
+    return () => { autoplayingRef.current = false; };
+  }, [autoplay, autoplayDirection, count, ensureRunning]);
+
+  const isHoveredRef = useRef(false);
+  useEffect(() => {
+    if (autoplay) return;
+    const onKey = (e) => {
+      if (!isHoveredRef.current) return;
+      if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
+      else if (e.key === "ArrowRight") { e.preventDefault(); goNext(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [autoplay, goPrev, goNext]);
+
+  const containerStyle = {
+    ...style, position: "relative", width: "100%", height: "100%",
+    minWidth: 320, minHeight: 300, overflow: "hidden", userSelect: "none", touchAction: "pan-y", outline: "none",
+  };
+
+  const selectable = !autoplay;
+  const cards = items.map((item, i) =>
+    React.createElement(CoverflowCard, {
+      key: i, item, index: i, pos, count, R, sizing, gap, radius, onSelect: selectable ? goTo : undefined,
+    })
+  );
+
+  const arrows = showArrows && count > 1 && (
+    React.createElement(React.Fragment, null,
+      React.createElement("button", {
+        type: "button", "aria-label": "Previous",
+        onPointerDown: (e) => e.stopPropagation(),
+        onClick: (e) => { e.stopPropagation(); goPrev(); },
+        style: {
+          position: "absolute", top: "50%", left: "16px", transform: "translateY(-50%)",
+          width: arrowSize, height: arrowSize, borderRadius: "50%", border: "none",
+          background: arrowBackground, color: arrowColor, display: "flex", alignItems: "center",
+          justifyContent: "center", cursor: "pointer", padding: 0, zIndex: 2000,
+          boxShadow: "0 6px 18px rgba(0,0,0,0.35)", WebkitTapHighlightColor: "transparent",
+        },
+      }, React.createElement("svg", { width: arrowSize * 0.4, height: arrowSize * 0.4, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", style: { pointerEvents: "none" } },
+        React.createElement("polyline", { points: "15 18 9 12 15 6" })
+      )),
+      React.createElement("button", {
+        type: "button", "aria-label": "Next",
+        onPointerDown: (e) => e.stopPropagation(),
+        onClick: (e) => { e.stopPropagation(); goNext(); },
+        style: {
+          position: "absolute", top: "50%", right: "16px", transform: "translateY(-50%)",
+          width: arrowSize, height: arrowSize, borderRadius: "50%", border: "none",
+          background: arrowBackground, color: arrowColor, display: "flex", alignItems: "center",
+          justifyContent: "center", cursor: "pointer", padding: 0, zIndex: 2000,
+          boxShadow: "0 6px 18px rgba(0,0,0,0.35)", WebkitTapHighlightColor: "transparent",
+        },
+      }, React.createElement("svg", { width: arrowSize * 0.4, height: arrowSize * 0.4, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", style: { pointerEvents: "none" } },
+        React.createElement("polyline", { points: "9 18 15 12 9 6" })
+      ))
+    )
+  );
+
+  return React.createElement("div", {
+    tabIndex: 0,
+    onMouseEnter: () => { isHoveredRef.current = true; },
+    onMouseLeave: () => { isHoveredRef.current = false; },
+    onFocus: () => { isHoveredRef.current = true; },
+    onBlur: () => { isHoveredRef.current = false; },
+    style: containerStyle,
+  }, React.createElement("div", { style: { position: "absolute", inset: 0, overflow: "hidden", isolation: "isolate", zIndex: 0 } }, cards), arrows);
+}
+
+// ==========================================
 // 6. MAIN APP COMPONENT
 // ==========================================
 function App() {
@@ -440,6 +678,17 @@ function App() {
       prev.includes(opt) ? prev.filter(x => x !== opt) : [...prev, opt]
     );
   };
+
+  const portfolioItems = [
+    { img: "https://i.ibb.co/V0DZc1mB/1000070745.png", brand: "Shoop Korean Noodles", type: "Culinary Atlas Campaign", tag: "Food & Beverage" },
+    { img: "https://i.ibb.co/JWT0b9Z7/1000070646.png", brand: "Shezan Pomegranate", type: "Luxury Splash Campaign", tag: "Beverages" },
+    { img: "https://i.ibb.co/vpfkX3h/1000070675-1.jpg", brand: "Hemani Venturous", type: "Dark Botanical Fragrance", tag: "Beauty & Fragrance" },
+    { video: "/assets/apple-headphones-ad.mp4", brand: "Apple Headphones", type: "Cinematic Tech Campaign", tag: "Tech & Audio" },
+    { video: "/assets/shezan-pomegranate-ad.mp4", brand: "Shezan Pomegranate", type: "Luxury Splash Campaign", tag: "Beverages" },
+    { img: "/assets/starbuck-coffee.jpg", brand: "Starbucks Coffee", type: "Artisan Beverage Campaign", tag: "Food & Beverage" },
+    { img: "/assets/velora-handbag.jpg", brand: "Velora Handbag", type: "Luxury Accessories Campaign", tag: "Fashion & Accessories" },
+    { img: "/assets/zelpor-shoes.png", brand: "Zelpor Shoes", type: "Premium Footwear Campaign", tag: "Footwear" },
+  ];
 
   const serviceOptions = ["Brand", "Digital", "Campaign", "Other"];
 
@@ -692,15 +941,8 @@ function App() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <PortfolioCard img="https://i.ibb.co/V0DZc1mB/1000070745.png" brand="Shoop Korean Noodles" type="Culinary Atlas Campaign" tag="Food & Beverage" />
-          <PortfolioCard img="https://i.ibb.co/JWT0b9Z7/1000070646.png" brand="Shezan Pomegranate" type="Luxury Splash Campaign" tag="Beverages" />
-          <PortfolioCard img="https://i.ibb.co/vpfkX3h/1000070675-1.jpg" brand="Hemani Venturous" type="Dark Botanical Fragrance" tag="Beauty & Fragrance" />
-          <PortfolioCard video="/assets/apple-headphones-ad.mp4" brand="Apple Headphones" type="Cinematic Tech Campaign" tag="Tech & Audio" />
-          <PortfolioCard video="/assets/shezan-pomegranate-ad.mp4" brand="Shezan Pomegranate" type="Luxury Splash Campaign" tag="Beverages" />
-          <PortfolioCard img="/assets/starbuck-coffee.jpg" brand="Starbucks Coffee" type="Artisan Beverage Campaign" tag="Food & Beverage" />
-          <PortfolioCard img="/assets/velora-handbag.jpg" brand="Velora Handbag" type="Luxury Accessories Campaign" tag="Fashion & Accessories" />
-          <PortfolioCard img="/assets/zelpor-shoes.png" brand="Zelpor Shoes" type="Premium Footwear Campaign" tag="Footwear" />
+        <div className="w-full" style={{ height: "500px" }}>
+          <CoverflowCarousel items={portfolioItems} />
         </div>
       </section>
 
