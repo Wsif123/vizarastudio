@@ -24,6 +24,10 @@
 
 <!-- Three.js CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+
 
 <script>
   // Configure Tailwind config with Inter and colors
@@ -73,6 +77,7 @@
 <style>
   :root {
     --bg-primary: #ffffff;
+    --bg-primary-r: 255; --bg-primary-g: 255; --bg-primary-b: 255;
     --bg-secondary: #FAFBF9;
     --text-primary: #000000;
     --text-secondary: #5A635A;
@@ -97,6 +102,7 @@
   }
   .dark {
     --bg-primary: #111827;
+    --bg-primary-r: 17; --bg-primary-g: 24; --bg-primary-b: 39;
     --bg-secondary: #1f2937;
     --text-primary: #f3f4f6;
     --text-secondary: #d1d5db;
@@ -123,6 +129,20 @@
   .dark textarea::placeholder {
     color: #6b7280;
   }
+
+  /* FlipText animation */
+  @keyframes flip-char {
+    0% { transform: rotateX(-90deg); opacity: 0; }
+    100% { transform: rotateX(0deg); opacity: 1; }
+  }
+  .flip-char {
+    animation: flip-char var(--flip-duration, 2.2s) ease-out var(--flip-delay, 0s) var(--flip-iteration, infinite) both;
+  }
+
+  /* CylinderCarousel rotation */
+  @keyframes ry {
+    to { transform: rotateY(1turn); }
+  }
 </style>
 </head>
 <body>
@@ -130,8 +150,9 @@
 <div id="root"></div>
 
 <script type="text/babel">
-const { useState, useEffect, useRef, useCallback } = React;
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
 const { motion, AnimatePresence } = window.Motion;
+const cn = (...classes) => classes.filter(Boolean).join(' ');
 
 // ==========================================
 // 1. TYPEWRITER CUSTOM HOOK
@@ -379,244 +400,420 @@ const ProcessRings = () => {
 };
 
 // ==========================================
-// 5. COVERFLOW CAROUSEL (adapted from Originkit)
+// 5. FLIPTEXT COMPONENT
 // ==========================================
+function FlipText({ className, children, duration = 2.2, delay = 0, loop = true, separator = " ", together = false }) {
+  if (!children) return null;
+  const words = useMemo(() => children.split(separator), [children, separator]);
+  const totalChars = children.length;
 
-const { motion: cfMotion, useMotionValue, useTransform, useReducedMotion } = window.Motion;
-
-function cfRelOf(index, pos, count) {
-  let rel = (((index - pos) % count) + count) % count;
-  if (rel > count / 2) rel -= count;
-  return rel;
-}
-
-function cfXForRel(rel, s, gap) {
-  const ar = Math.abs(rel);
-  const c1 = s.activeWidth / 2 + gap + s.restWidth / 2;
-  const pitch = s.restWidth + gap;
-  const mag = ar <= 1 ? ar * c1 : c1 + (ar - 1) * pitch;
-  return (rel < 0 ? -1 : 1) * mag;
-}
-
-function cfBlendForRel(rel) {
-  return Math.min(Math.abs(rel), 1);
-}
-
-function CoverflowCard({
-  item, index, pos, count, R, sizing, gap, radius, onSelect
-}) {
-  const src = item.img || "";
-  const isVideo = !!item.video;
-  const itemAr = item.ar || 1.5;
-
-  const x = useTransform(pos, (p) => cfXForRel(cfRelOf(index, p, count), sizing, gap));
-  const opacity = useTransform(pos, (p) => {
-    const ar = Math.abs(cfRelOf(index, p, count));
-    return ar <= R ? 1 : ar >= R + 1 ? 0 : 1 - (ar - R);
-  });
-  const zIndex = useTransform(pos, (p) => Math.round(1000 - Math.abs(cfRelOf(index, p, count)) * 100));
-  const wVal = useTransform(pos, (p) => {
-    const rel = cfRelOf(index, p, count);
-    const a = cfBlendForRel(rel);
-    const activeW = sizing.activeHeight * itemAr;
-    return activeW + (sizing.restWidth - activeW) * a;
-  });
-  const hVal = useTransform(pos, (p) => {
-    const a = cfBlendForRel(cfRelOf(index, p, count));
-    return sizing.activeHeight + (sizing.restHeight - sizing.activeHeight) * a;
-  });
-  const showText = useTransform(pos, (p) => Math.abs(cfRelOf(index, p, count)) < 0.8 ? 1 : 0);
-
-  return React.createElement(
-    cfMotion.div,
-    {
-      onClick: onSelect ? () => onSelect(index) : undefined,
-      style: { position: "absolute", left: "50%", top: "50%", x, zIndex, opacity, cursor: onSelect ? "pointer" : "default" },
-    },
-    React.createElement(
-      cfMotion.div,
-      {
-        style: {
-          x: "-50%", y: "-50%", width: wVal, height: hVal, borderRadius: radius,
-          overflow: "hidden", background: "var(--card-bg)", border: "1px solid var(--border-color)",
-        },
-      },
-      React.createElement(
-        "div", { style: { width: "100%", height: "100%", overflow: "hidden", position: "relative" } },
-        isVideo
-          ? React.createElement("video", { src: item.video, muted: true, autoPlay: true, loop: true, playsInline: true, style: { width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none", userSelect: "none" } })
-          : React.createElement("img", { src: src, alt: item.brand || "", draggable: false, style: { width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none", userSelect: "none" } }),
-        React.createElement(
-          cfMotion.div,
-          {
-            style: {
-              opacity: showText, position: "absolute", bottom: 0, left: 0, right: 0,
-              padding: "16px", background: "linear-gradient(transparent, rgba(0,0,0,0.7))", pointerEvents: "none",
-            },
-          },
-          React.createElement("span", { className: "text-[10px] tracking-widest uppercase font-semibold", style: { color: "#4D6D47", backgroundColor: "rgba(250,251,249,0.9)", border: "1px solid var(--border-color)", padding: "2px 10px", borderRadius: "9999px", display: "inline-block", marginBottom: "6px" } }, item.tag),
-          React.createElement("h4", { style: { fontSize: "16px", fontWeight: 500, color: "#fff", margin: "4px 0 2px", textShadow: "0 1px 4px rgba(0,0,0,0.5)" } }, item.brand),
-          React.createElement("p", { style: { fontSize: "12px", color: "rgba(255,255,255,0.8)", textShadow: "0 1px 3px rgba(0,0,0,0.4)" } }, item.type),
-        )
-      )
-    )
-  );
-}
-
-function CoverflowCarousel(props) {
-  const {
-    items: rawItems, activeWidth = 500, activeHeight = 360, restWidth = 140, restHeight = 210,
-    gap = 24, radius = 12, showArrows = true, arrowColor = "#ffffff", arrowBackground = "rgba(0,0,0,0.6)",
-    arrowSize = 48, autoplay = false, autoplayDirection = "rightToLeft", transitionDuration = 0.4,
-    transitionDelay = 1.2, style,
-  } = props;
-
-  const prefersReducedMotion = useReducedMotion();
-  const items = Array.isArray(rawItems) && rawItems.length > 0 ? rawItems : [];
-  const count = Math.max(1, items.length);
-  const sizing = { restWidth, restHeight, activeWidth, activeHeight };
-  const R = Math.max(1, Math.min(6, Math.floor(count / 2) - 1));
-
-  const pos = useMotionValue(0);
-  const targetRef = useRef(0);
-  const rafRef = useRef(null);
-  const lastTRef = useRef(null);
-  const autoplayingRef = useRef(false);
-  const dirRef = useRef(1);
-  const dwellAccRef = useRef(0);
-  const moveDurRef = useRef(transitionDuration);
-  moveDurRef.current = transitionDuration;
-  const dwellRef = useRef(transitionDelay);
-  dwellRef.current = transitionDelay;
-  const reducedRef = useRef(prefersReducedMotion);
-  reducedRef.current = prefersReducedMotion;
-
-  const tick = useCallback((t) => {
-    const last = lastTRef.current ?? t;
-    const dt = Math.min((t - last) / 1000, 1 / 30);
-    lastTRef.current = t;
-    const cur = pos.get();
-    const diff = targetRef.current - cur;
-    const dur = Math.max(0.08, moveDurRef.current);
-    const step = (1 / dur) * dt;
-    const arriving = reducedRef.current || Math.abs(diff) <= step;
-    if (arriving) {
-      pos.set(targetRef.current);
-      if (autoplayingRef.current) {
-        dwellAccRef.current += dt;
-        if (dwellAccRef.current >= Math.max(0, dwellRef.current)) {
-          dwellAccRef.current = 0;
-          targetRef.current += dirRef.current;
-        }
-        rafRef.current = requestAnimationFrame(tick);
-        return;
-      }
-      rafRef.current = null;
-      lastTRef.current = null;
-      return;
+  const getCharIndex = (wordIndex, charIndex) => {
+    let index = 0;
+    for (let i = 0; i < wordIndex; i++) {
+      index += words[i].length + (separator === " " ? 1 : separator.length);
     }
-    pos.set(cur + Math.sign(diff) * step);
-    rafRef.current = requestAnimationFrame(tick);
-  }, [pos]);
-
-  const ensureRunning = useCallback(() => {
-    if (rafRef.current == null) {
-      lastTRef.current = null;
-      rafRef.current = requestAnimationFrame(tick);
-    }
-  }, [tick]);
-
-  const goNext = useCallback(() => { targetRef.current += 1; ensureRunning(); }, [ensureRunning]);
-  const goPrev = useCallback(() => { targetRef.current -= 1; ensureRunning(); }, [ensureRunning]);
-  const goTo = useCallback((index) => {
-    const cur = targetRef.current;
-    let d = index - cur;
-    d = ((d % count) + count) % count;
-    if (d > count / 2) d -= count;
-    targetRef.current = cur + d;
-    ensureRunning();
-  }, [ensureRunning, count]);
-
-  useEffect(() => {
-    return () => { if (rafRef.current != null) cancelAnimationFrame(rafRef.current); rafRef.current = null; };
-  }, []);
-
-  useEffect(() => {
-    const on = autoplay && count > 1;
-    autoplayingRef.current = on;
-    if (on) {
-      dirRef.current = autoplayDirection === "leftToRight" ? -1 : 1;
-      dwellAccRef.current = 0;
-      ensureRunning();
-    }
-    return () => { autoplayingRef.current = false; };
-  }, [autoplay, autoplayDirection, count, ensureRunning]);
-
-  const isHoveredRef = useRef(false);
-  useEffect(() => {
-    if (autoplay) return;
-    const onKey = (e) => {
-      if (!isHoveredRef.current) return;
-      if (e.key === "ArrowLeft") { e.preventDefault(); goPrev(); }
-      else if (e.key === "ArrowRight") { e.preventDefault(); goNext(); }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [autoplay, goPrev, goNext]);
-
-  const containerStyle = {
-    ...style, position: "relative", width: "100%", height: "100%",
-    minWidth: 320, minHeight: 300, overflow: "hidden", userSelect: "none", touchAction: "pan-y", outline: "none",
+    return index + charIndex;
   };
 
-  const selectable = !autoplay;
-  const cards = items.map((item, i) =>
-    React.createElement(CoverflowCard, {
-      key: i, item, index: i, pos, count, R, sizing, gap, radius, onSelect: selectable ? goTo : undefined,
-    })
+  return (
+    <div className={cn("flip-text-wrapper inline-block leading-none", className)} style={{ perspective: "1000px" }}>
+      {words.map((word, wordIndex) => {
+        const chars = word.split("");
+        return (
+          <span key={wordIndex} className="word inline-block whitespace-nowrap" style={{ transformStyle: "preserve-3d" }}>
+            {chars.map((char, charIndex) => {
+              const currentGlobalIndex = getCharIndex(wordIndex, charIndex);
+              let calculatedDelay = delay;
+              if (!together) {
+                const normalizedIndex = currentGlobalIndex / totalChars;
+                const sineValue = Math.sin(normalizedIndex * (Math.PI / 2));
+                calculatedDelay = sineValue * (duration * 0.25) + delay;
+              }
+              return (
+                <span
+                  key={charIndex}
+                  className="flip-char inline-block relative"
+                  data-char={char}
+                  style={{
+                    "--flip-duration": `${duration}s`,
+                    "--flip-delay": `${calculatedDelay}s`,
+                    "--flip-iteration": loop ? "infinite" : "1",
+                    transformStyle: "preserve-3d",
+                  }}
+                >
+                  {char === " " ? "\u00A0" : char}
+                </span>
+              );
+            })}
+            {separator === " " && wordIndex < words.length - 1 && <span className="whitespace inline-block">&nbsp;</span>}
+            {separator !== " " && wordIndex < words.length - 1 && <span className="separator inline-block">{separator}</span>}
+          </span>
+        );
+      })}
+    </div>
   );
+}
 
-  const arrows = showArrows && count > 1 && (
-    React.createElement(React.Fragment, null,
-      React.createElement("button", {
-        type: "button", "aria-label": "Previous",
-        onPointerDown: (e) => e.stopPropagation(),
-        onClick: (e) => { e.stopPropagation(); goPrev(); },
-        style: {
-          position: "absolute", top: "50%", left: "16px", transform: "translateY(-50%)",
-          width: arrowSize, height: arrowSize, borderRadius: "50%", border: "none",
-          background: arrowBackground, color: arrowColor, display: "flex", alignItems: "center",
-          justifyContent: "center", cursor: "pointer", padding: 0, zIndex: 2000,
-          boxShadow: "0 6px 18px rgba(0,0,0,0.35)", WebkitTapHighlightColor: "transparent",
-        },
-      }, React.createElement("svg", { width: arrowSize * 0.4, height: arrowSize * 0.4, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", style: { pointerEvents: "none" } },
-        React.createElement("polyline", { points: "15 18 9 12 15 6" })
-      )),
-      React.createElement("button", {
-        type: "button", "aria-label": "Next",
-        onPointerDown: (e) => e.stopPropagation(),
-        onClick: (e) => { e.stopPropagation(); goNext(); },
-        style: {
-          position: "absolute", top: "50%", right: "16px", transform: "translateY(-50%)",
-          width: arrowSize, height: arrowSize, borderRadius: "50%", border: "none",
-          background: arrowBackground, color: arrowColor, display: "flex", alignItems: "center",
-          justifyContent: "center", cursor: "pointer", padding: 0, zIndex: 2000,
-          boxShadow: "0 6px 18px rgba(0,0,0,0.35)", WebkitTapHighlightColor: "transparent",
-        },
-      }, React.createElement("svg", { width: arrowSize * 0.4, height: arrowSize * 0.4, viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 2.2, strokeLinecap: "round", strokeLinejoin: "round", style: { pointerEvents: "none" } },
-        React.createElement("polyline", { points: "9 18 15 12 9 6" })
-      ))
-    )
+// ==========================================
+// 6. CYLINDER CAROUSEL (adapted from Originkit)
+// ==========================================
+function CylinderCarousel({ images, cardWidth = 250, animationDuration = 32, className, containerClassName, cardClassName }) {
+  const items = Array.isArray(images) && images.length > 0 ? images : [];
+  const N = items.length;
+  if (N === 0) return null;
+
+  return (
+    <div
+      className={cn("w-full h-full min-h-[500px] grid place-items-center relative", className)}
+      style={{
+        perspective: "35em",
+      }}
+    >
+      <div
+        className={cn("grid place-items-center [transform-style:preserve-3d]", containerClassName)}
+        style={{
+          "--n": N,
+          "--w": `${cardWidth}px`,
+          "--ba": "calc(1turn / var(--n))",
+          "--anim-dur": `${animationDuration}s`,
+          animation: "ry var(--anim-dur) linear infinite",
+          transformStyle: "preserve-3d",
+        }}
+      >
+        {items.map((item, i) => {
+          const isVideo = !!item.video;
+          const h = item.ar ? Math.round(cardWidth / item.ar) : cardWidth;
+          return (
+            <div
+              key={i}
+              className={cn("[grid-area:1/1] rounded-2xl overflow-hidden [backface-visibility:hidden]", cardClassName)}
+              style={{
+                width: "var(--w)",
+                height: h,
+                "--i": i,
+                transform: "rotateY(calc(var(--i) * var(--ba))) translateZ(calc(-1 * (0.5 * var(--w) + 0.5em) / tan(0.5 * var(--ba))))",
+                border: "1px solid var(--border-color)",
+                backgroundColor: "var(--card-bg)",
+                position: "relative",
+              }}
+            >
+              {isVideo ? (
+                <video src={item.video} muted autoPlay loop playsInline style={{ width: "100%", height: "100%", objectFit: "contain", display: "block", pointerEvents: "none" }} />
+              ) : (
+                <img src={item.img} alt={item.brand || ""} draggable={false} style={{ width: "100%", height: "100%", objectFit: "cover", display: "block", pointerEvents: "none" }} />
+              )}
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "12px", background: "linear-gradient(transparent, rgba(0,0,0,0.7))", pointerEvents: "none" }}>
+                <span style={{ color: "#4D6D47", backgroundColor: "rgba(250,251,249,0.9)", border: "1px solid var(--border-color)", padding: "1px 8px", borderRadius: "9999px", display: "inline-block", fontSize: "9px", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "4px" }}>{item.tag}</span>
+                <h4 style={{ fontSize: "13px", fontWeight: 500, color: "#fff", margin: "2px 0", textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}>{item.brand}</h4>
+                <p style={{ fontSize: "11px", color: "rgba(255,255,255,0.8)", textShadow: "0 1px 2px rgba(0,0,0,0.4)" }}>{item.type}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
+}
 
-  return React.createElement("div", {
-    tabIndex: 0,
-    onMouseEnter: () => { isHoveredRef.current = true; },
-    onMouseLeave: () => { isHoveredRef.current = false; },
-    onFocus: () => { isHoveredRef.current = true; },
-    onBlur: () => { isHoveredRef.current = false; },
-    style: containerStyle,
-  }, React.createElement("div", { style: { position: "absolute", inset: 0, overflow: "hidden", isolation: "isolate", zIndex: 0 } }, cards), arrows);
+// ==========================================
+// 7. WAVE GRID BACKGROUND (adapted from Originkit)
+// ==========================================
+const MAX_TRAIL = 128;
+
+const VIGNETTE_RGB_SHIFT_SHADER = {
+  uniforms: {
+    tDiffuse: { value: null },
+    shiftAmount: { value: 0.005 },
+    vignetteRadius: { value: 0.3 },
+    vignetteSoftness: { value: 0.3 },
+  },
+  vertexShader: [
+    "varying vec2 vUv;",
+    "void main() {",
+    "  vUv = uv;",
+    "  gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);",
+    "}",
+  ].join("\n"),
+  fragmentShader: [
+    "uniform sampler2D tDiffuse;",
+    "uniform float shiftAmount;",
+    "uniform float vignetteRadius;",
+    "uniform float vignetteSoftness;",
+    "varying vec2 vUv;",
+    "void main() {",
+    "  vec2 center = vec2(0.5);",
+    "  float dist = distance(vUv, center);",
+    "  float horzQuadrant = sign(vUv.x - center.x);",
+    "  float vertQuadrant = sign(vUv.y - center.y);",
+    "  float vignetteFactor = smoothstep(vignetteRadius, vignetteRadius + vignetteSoftness, dist);",
+    "  float currentShift = shiftAmount * vignetteFactor;",
+    "  float r = texture2D(tDiffuse, vUv + vec2(currentShift * horzQuadrant, currentShift * vertQuadrant)).r;",
+    "  float g = texture2D(tDiffuse, vUv).g;",
+    "  float b = texture2D(tDiffuse, vUv - vec2(currentShift * horzQuadrant, currentShift * vertQuadrant)).b;",
+    "  float darken = 1.0 - vignetteFactor * 0.5;",
+    "  gl_FragColor = vec4(vec3(r, g, b) * darken, 1.0);",
+    "}",
+  ].join("\n"),
+};
+
+function overrideVertexShader(vertexShader) {
+  return vertexShader
+    .replace("#include <common>", [
+      "#include <common>",
+      "varying float vHeight;",
+      "attribute vec2 aOffset;",
+      "uniform sampler2D uTrailTexture;",
+      "uniform int       uTrailCount;",
+      "uniform float     uWaveSpeed;",
+      "uniform float     uWaveFreq;",
+      "uniform float     uWaveWidth;",
+      "uniform float     uFadeTime;",
+      "uniform float     uAmplitude;",
+      "uniform float     uJitter;",
+      "uniform float     uMaxHeight;",
+      "vec2 hash2( vec2 p ) {",
+      "  p = vec2( dot( p, vec2( 127.1, 311.7 ) ), dot( p, vec2( 269.5, 183.3 ) ) );",
+      "  return fract( sin( p ) * 43758.5453123 ) - 0.5;",
+      "}",
+    ].join("\n"))
+    .replace("#include <begin_vertex>", [
+      "#include <begin_vertex>",
+      "vHeight = 0.0;",
+      "if ( position.y > 0.0 ) {",
+      "  vec2 jitter  = hash2( aOffset ) * uJitter;",
+      "  vec2 worldXZ = aOffset + jitter;",
+      "  float waveHeight  = 0.0;",
+      "  float totalWeight = 0.0;",
+      "  for ( int i = 0; i < uTrailCount; i++ ) {",
+      "    vec4 td = texture2D( uTrailTexture, vec2( ( float(i) + 0.5 ) / 128.0, 0.5 ) );",
+      "    float dist      = length( worldXZ - td.rg );",
+      "    float wavefront = uWaveSpeed * td.b;",
+      "    float relDist   = dist - wavefront;",
+      "    float window = exp( -( relDist * relDist ) / ( uWaveWidth * uWaveWidth ) );",
+      "    float fade   = exp( -td.b / uFadeTime );",
+      "    float atten  = 1.0 / ( 1.0 + dist * 0.1 );",
+      "    float weight = fade * window * atten * td.a;",
+      "    waveHeight  += weight * cos( uWaveFreq * relDist );",
+      "    totalWeight += weight;",
+      "  }",
+      "  waveHeight /= max( totalWeight, 1.0 );",
+      "  float displacement = clamp( waveHeight * uAmplitude, -uMaxHeight, uMaxHeight );",
+      "  transformed.y += displacement;",
+      "  vHeight = displacement;",
+      "}",
+    ].join("\n"));
+}
+
+function WaveGridBackground({ children, className, gridSize = 40, colorBase = "#ffffff", colorHigh = "#0055ff", waveAmplitude = 0.4, waveSpeed = 6.0, waveFrequency = 1.2, waveWidth = 3.0, waveMaxHeight = 0.4, waveJitter = 0.2, autoAnimate = true, vignette = true }) {
+  const containerRef = useRef(null);
+  const canvasRef = useRef(null);
+  const propsRef = useRef({ colorBase, colorHigh, waveAmplitude, waveSpeed, waveFrequency, waveWidth, waveMaxHeight, waveJitter, autoAnimate });
+
+  useEffect(() => {
+    propsRef.current = { colorBase, colorHigh, waveAmplitude, waveSpeed, waveFrequency, waveWidth, waveMaxHeight, waveJitter, autoAnimate };
+  });
+
+  useEffect(() => {
+    const container = containerRef.current;
+    const canvas = canvasRef.current;
+    if (!container || !canvas) return;
+
+    const cubeWidth = 0.8, cubeHeight = 3, gap = 0.01;
+    const bounds = gridSize * (cubeWidth + gap);
+    const getSize = () => ({ width: container.clientWidth || 1, height: container.clientHeight || 1, pixelRatio: Math.min(window.devicePixelRatio, 2) });
+    let size = getSize();
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(colorBase).multiplyScalar(0.5);
+    const radius = 12, alphaRange = Math.PI * 0.03, betaRange = Math.PI * 0.05;
+    const mouse = new THREE.Vector2(0, 0), lerpedMouse = new THREE.Vector2(0, 0);
+    const camera = new THREE.PerspectiveCamera(40, size.width / size.height, 0.1, 200);
+    const positionCamera = (mx, my) => {
+      const alpha = my * alphaRange, beta = mx * betaRange;
+      camera.position.set(-radius * Math.cos(alpha) * Math.sin(beta), radius * Math.cos(alpha) * Math.cos(beta), radius * Math.sin(alpha));
+      camera.up.set(0, 0, -1);
+      camera.lookAt(0, 0, 0);
+    };
+    positionCamera(0, 0);
+    scene.add(camera);
+    const onMouseMove = (e) => { mouse.x = (e.clientX / size.width) * 2 - 1; mouse.y = -(e.clientY / size.height) * 2 + 1; };
+    window.addEventListener("mousemove", onMouseMove);
+    const ambientLight = new THREE.AmbientLight("#ffffff", 0.5);
+    scene.add(ambientLight);
+    const keyLight = new THREE.DirectionalLight("#ffffff", 4.0);
+    keyLight.position.set(-20, 10, 6);
+    keyLight.castShadow = true;
+    keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.radius = 6;
+    keyLight.shadow.camera.near = 0.1;
+    keyLight.shadow.camera.far = 60;
+    keyLight.shadow.camera.left = -22;
+    keyLight.shadow.camera.right = 22;
+    keyLight.shadow.camera.top = 22;
+    keyLight.shadow.camera.bottom = -22;
+    keyLight.shadow.bias = 0.0001;
+    scene.add(keyLight);
+    const fillLight = new THREE.DirectionalLight("#ffffff", 1.0);
+    fillLight.position.set(10, 5, -3);
+    scene.add(fillLight);
+    const trailData = new Float32Array(MAX_TRAIL * 4);
+    const trailTexture = new THREE.DataTexture(trailData, MAX_TRAIL, 1, THREE.RGBAFormat, THREE.FloatType);
+    trailTexture.needsUpdate = true;
+    const trailUniforms = {
+      uTrailTexture: { value: trailTexture }, uTrailCount: { value: 0 }, uFadeTime: { value: 2.0 },
+      uWaveSpeed: { value: waveSpeed }, uWaveFreq: { value: waveFrequency }, uWaveWidth: { value: waveWidth },
+      uAmplitude: { value: waveAmplitude }, uJitter: { value: waveJitter }, uMaxHeight: { value: waveMaxHeight },
+    };
+    const colorUniforms = { uColorBase: { value: new THREE.Color(colorBase) }, uColorHigh: { value: new THREE.Color(colorHigh) } };
+    const trail = [];
+    let lastPoint = null, timeSinceLastMove = 0, randomPointTimer = 0, placingRandom = true;
+    const fadeTime = 2.0, trailSpacing = 0.1;
+    const rayPlane = new THREE.Mesh(new THREE.PlaneGeometry(bounds, bounds), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, visible: false }));
+    rayPlane.rotation.x = -Math.PI / 2;
+    rayPlane.updateMatrixWorld(true);
+    const raycaster = new THREE.Raycaster();
+    const pointerNDC = new THREE.Vector2();
+    let rect = canvas.getBoundingClientRect();
+    const onPointerMove = (e) => {
+      pointerNDC.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+      raycaster.setFromCamera(pointerNDC, camera);
+      const hits = raycaster.intersectObject(rayPlane);
+      if (hits.length === 0) return;
+      const { x, z } = hits[0].point;
+      let distDelta = 0;
+      if (lastPoint) { const dx = x - lastPoint.x, dz = z - lastPoint.z; distDelta = Math.sqrt(dx * dx + dz * dz); if (distDelta < trailSpacing) return; }
+      trail.push({ x, z, age: 0, distDelta });
+      lastPoint = { x, z };
+      timeSinceLastMove = 0;
+      placingRandom = false;
+      randomPointTimer = 0;
+    };
+    canvas.addEventListener("pointermove", onPointerMove);
+    const addRandomPoint = () => {
+      const x = (Math.random() * 0.5 - 0.25) * bounds, z = (Math.random() * 0.5 - 0.25) * bounds, distDelta = 0.8 + Math.random() * 0.2;
+      trail.push({ x, z, age: 0, distDelta });
+    };
+    const updateTrail = (delta) => {
+      const expiry = fadeTime * 4;
+      for (let i = trail.length - 1; i >= 0; i--) { if (trail[i].age > expiry) trail.splice(i, 1); }
+      timeSinceLastMove += delta;
+      if (timeSinceLastMove >= 3.0 && !placingRandom && propsRef.current.autoAnimate) { placingRandom = true; randomPointTimer = 0; }
+      if (placingRandom && propsRef.current.autoAnimate) {
+        randomPointTimer += delta;
+        if (randomPointTimer >= 1.5) { addRandomPoint(); randomPointTimer = 0; }
+      }
+      const count = Math.min(trail.length, MAX_TRAIL);
+      if (count > 0 || trailUniforms.uTrailCount.value > 0) {
+        for (let i = 0; i < count; i++) { const ti = i * 4; trailData[ti] = trail[i].x; trailData[ti + 1] = trail[i].z; trailData[ti + 2] = trail[i].age; trailData[ti + 3] = trail[i].distDelta; }
+        trailTexture.needsUpdate = true;
+        trailUniforms.uTrailCount.value = count;
+      }
+    };
+    const cnt = gridSize * gridSize;
+    const geometry = new THREE.BoxGeometry(cubeWidth, cubeHeight, cubeWidth);
+    const offsetAttribute = new THREE.InstancedBufferAttribute(new Float32Array(cnt * 2), 2);
+    geometry.setAttribute("aOffset", offsetAttribute);
+    const material = new THREE.MeshPhongMaterial({ color: 0xffffff });
+    material.onBeforeCompile = (shader) => {
+      Object.assign(shader.uniforms, trailUniforms, colorUniforms);
+      shader.vertexShader = overrideVertexShader(shader.vertexShader);
+      shader.fragmentShader = shader.fragmentShader.replace("#include <common>", "#include <common>\nvarying float vHeight;\nuniform vec3 uColorBase;\nuniform vec3 uColorHigh;\nuniform float uMaxHeight;").replace("#include <color_fragment>", "#include <color_fragment>\nfloat t = clamp( vHeight / uMaxHeight, 0.0, 1.0 );\ndiffuseColor.rgb = mix( uColorBase, uColorHigh, t );");
+    };
+    const depthMaterial = new THREE.MeshDepthMaterial();
+    depthMaterial.onBeforeCompile = (shader) => { Object.assign(shader.uniforms, trailUniforms); shader.vertexShader = overrideVertexShader(shader.vertexShader); };
+    const instancedMesh = new THREE.InstancedMesh(geometry, material, cnt);
+    instancedMesh.customDepthMaterial = depthMaterial;
+    instancedMesh.castShadow = true;
+    instancedMesh.receiveShadow = true;
+    scene.add(instancedMesh);
+    const dummy = new THREE.Object3D();
+    const spacing = cubeWidth + gap;
+    const offset = ((gridSize - 1) * spacing) / 2;
+    for (let i = 0; i < gridSize; i++) {
+      for (let j = 0; j < gridSize; j++) {
+        const idx = i * gridSize + j;
+        dummy.position.set(i * spacing - offset, 0, j * spacing - offset);
+        dummy.updateMatrix();
+        instancedMesh.setMatrixAt(idx, dummy.matrix);
+        offsetAttribute.setXY(idx, i * spacing - offset, j * spacing - offset);
+      }
+    }
+    instancedMesh.instanceMatrix.needsUpdate = true;
+    offsetAttribute.needsUpdate = true;
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.95;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
+    renderer.setClearColor("#808080");
+    renderer.setSize(size.width, size.height);
+    renderer.setPixelRatio(size.pixelRatio);
+    const composer = new THREE.EffectComposer(renderer);
+    composer.addPass(new THREE.RenderPass(scene, camera));
+    const vignettePass = new THREE.ShaderPass(VIGNETTE_RGB_SHIFT_SHADER);
+    if (vignette) {
+      composer.addPass(vignettePass);
+      vignettePass.renderToScreen = true;
+    } else {
+      const lastPass = composer.passes[composer.passes.length - 1];
+      if (lastPass) lastPass.renderToScreen = true;
+    }
+    composer.setSize(size.width, size.height);
+    composer.setPixelRatio(size.pixelRatio);
+    const applySize = () => {
+      size = getSize();
+      camera.aspect = size.width / size.height;
+      camera.updateProjectionMatrix();
+      renderer.setSize(size.width, size.height);
+      renderer.setPixelRatio(size.pixelRatio);
+      composer.setSize(size.width, size.height);
+      composer.setPixelRatio(size.pixelRatio);
+      rect = canvas.getBoundingClientRect();
+    };
+    const resizeObserver = new ResizeObserver(applySize);
+    resizeObserver.observe(container);
+    window.addEventListener("resize", applySize);
+    const clock = new THREE.Clock();
+    renderer.setAnimationLoop(() => {
+      const delta = clock.getDelta();
+      const p = propsRef.current;
+      trailUniforms.uWaveSpeed.value = p.waveSpeed;
+      trailUniforms.uWaveFreq.value = p.waveFrequency;
+      trailUniforms.uWaveWidth.value = p.waveWidth;
+      trailUniforms.uAmplitude.value = p.waveAmplitude;
+      trailUniforms.uJitter.value = p.waveJitter;
+      trailUniforms.uMaxHeight.value = p.waveMaxHeight;
+      colorUniforms.uColorBase.value.set(p.colorBase);
+      colorUniforms.uColorHigh.value.set(p.colorHigh);
+      scene.background = new THREE.Color(p.colorBase).multiplyScalar(0.5);
+      updateTrail(delta);
+      lerpedMouse.x += (mouse.x - lerpedMouse.x) * 0.04;
+      lerpedMouse.y += (mouse.y - lerpedMouse.y) * 0.04;
+      positionCamera(lerpedMouse.x, lerpedMouse.y);
+      composer.render();
+    });
+    return () => {
+      renderer.setAnimationLoop(null);
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("resize", applySize);
+      canvas.removeEventListener("pointermove", onPointerMove);
+      resizeObserver.disconnect();
+      geometry.dispose();
+      material.dispose();
+      depthMaterial.dispose();
+      rayPlane.geometry.dispose();
+      rayPlane.material.dispose();
+      trailTexture.dispose();
+      composer.dispose();
+      renderer.dispose();
+    };
+  }, [gridSize, vignette]);
+
+  return (
+    <div ref={containerRef} className={cn("relative w-full h-full overflow-hidden", className)} style={{ position: "fixed", inset: 0, zIndex: 0, pointerEvents: "none" }}>
+      <canvas ref={canvasRef} className="block w-full h-full" style={{ pointerEvents: "none" }} />
+      {children != null && <div className="absolute inset-0" style={{ pointerEvents: "none" }}>{children}</div>}
+    </div>
+  );
 }
 
 // ==========================================
@@ -639,9 +836,6 @@ function App() {
 
   const toggleTheme = () => setTheme(t => t === 'light' ? 'dark' : 'light');
   const isDark = theme === 'dark';
-
-  // Typewriter Setup
-  const { displayed, done } = useTypewriter("we'd love to\nhear from you!", 38, 600);
 
   // Nav hide-on-scroll
   useEffect(() => {
@@ -686,8 +880,8 @@ function App() {
     { img: "https://i.ibb.co/V0DZc1mB/1000070745.png", brand: "Shoop Korean Noodles", type: "Culinary Atlas Campaign", tag: "Food & Beverage", ar: 0.75 },
     { img: "https://i.ibb.co/JWT0b9Z7/1000070646.png", brand: "Shezan Pomegranate", type: "Luxury Splash Campaign", tag: "Beverages", ar: 0.75 },
     { img: "https://i.ibb.co/vpfkX3h/1000070675-1.jpg", brand: "Hemani Venturous", type: "Dark Botanical Fragrance", tag: "Beauty & Fragrance", ar: 0.75 },
-    { video: "/assets/apple-headphones-ad.mp4", brand: "Apple Headphones", type: "Cinematic Tech Campaign", tag: "Tech & Audio", ar: 1.78 },
-    { video: "/assets/shezan-pomegranate-ad.mp4", brand: "Shezan Pomegranate", type: "Luxury Splash Campaign", tag: "Beverages", ar: 1.78 },
+    { video: "/assets/apple-headphones-ad.mp4", brand: "Apple Headphones", type: "Cinematic Tech Campaign", tag: "Tech & Audio", ar: 9/16 },
+    { video: "/assets/shezan-pomegranate-ad.mp4", brand: "Shezan Pomegranate", type: "Luxury Splash Campaign", tag: "Beverages", ar: 9/16 },
     { img: "/assets/starbuck-coffee.jpg", brand: "Starbucks Coffee", type: "Artisan Beverage Campaign", tag: "Food & Beverage", ar: 0.75 },
     { img: "/assets/velora-handbag.jpg", brand: "Velora Handbag", type: "Luxury Accessories Campaign", tag: "Fashion & Accessories", ar: 0.75 },
     { img: "/assets/zelpor-shoes.png", brand: "Zelpor Shoes", type: "Premium Footwear Campaign", tag: "Footwear", ar: 0.75 },
@@ -696,8 +890,10 @@ function App() {
   const serviceOptions = ["Brand", "Digital", "Campaign", "Other"];
 
   return (
-    <div className={`${isDark ? 'dark' : ''} relative font-sans selection:bg-[#EAECE9] selection:text-[#1C2E1E] antialiased overflow-x-hidden flex flex-col lg:block lg:min-h-screen`}
-      style={{ backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+    <>
+      <WaveGridBackground colorBase={isDark ? "#111827" : "#e8ece8"} colorHigh={isDark ? "#6B8F6B" : "#4D6D47"} waveAmplitude={0.5} waveSpeed={4.0} waveFrequency={1.5} autoAnimate={true} vignette={true} />
+      <div className={`${isDark ? 'dark' : ''} relative font-sans selection:bg-[#EAECE9] selection:text-[#1C2E1E] antialiased overflow-x-hidden flex flex-col lg:block lg:min-h-screen`}
+        style={{ color: 'var(--text-primary)' }}>
       
 
       
@@ -816,7 +1012,7 @@ function App() {
       </div>
 
       {/* Content Layout Container */}
-      <div className="relative z-10 flex flex-col order-first lg:order-none w-full pb-8 lg:pb-0 lg:min-h-screen" style={{ backgroundColor: 'var(--bg-primary)' }}>
+      <div className="relative z-10 flex flex-col order-first lg:order-none w-full pb-8 lg:pb-0 lg:min-h-screen" style={{ backgroundColor: 'transparent' }}>
         <main id="spade-hero" className="w-full max-w-7xl mx-auto px-6 pt-32 pb-16 lg:py-12 flex-1 flex flex-col justify-center">
           
           {/* Headline drop-in animation */}
@@ -826,11 +1022,10 @@ function App() {
             transition={{ duration: 0.6 }}
             className="w-full"
           >
-            <h1 className="text-5xl md:text-6xl lg:text-[76px] font-normal tracking-tight leading-[1.08] mb-8 select-none w-full whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>
-              {displayed}
-              {!done && (
-                <span className="inline-block w-[2px] h-[1.1em] align-middle ml-[2px] animate-blink" style={{ backgroundColor: 'var(--text-primary)' }} />
-              )}
+            <h1 className="text-5xl md:text-6xl lg:text-[76px] font-normal tracking-tight leading-[1.08] mb-8 select-none w-full" style={{ color: 'var(--text-primary)' }}>
+              <FlipText duration={2.2} delay={0} loop={true}>we'd love to</FlipText>
+              <br />
+              <FlipText duration={2.2} delay={0.3} loop={true}>hear from you!</FlipText>
             </h1>
           </motion.div>
 
@@ -869,7 +1064,7 @@ function App() {
                         ? 'bg-brand-green text-white shadow-md shadow-emerald-950/5' 
                         : 'text-brand-green'
                     }`}
-                    style={isActive ? {} : { backgroundColor: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}
+                    style={isActive ? {} : { backgroundColor: 'rgba(var(--bg-primary-r), var(--bg-primary-g), var(--bg-primary-b), 0.5)', border: '1px solid var(--border-color)' }}
                   >
                     <AnimatePresence>
                       {isActive && (
@@ -931,7 +1126,7 @@ function App() {
       </div>
 
       {/* PORTFOLIO SECTION */}
-      <section id="work" className="relative z-10 border-t py-24 px-6 sm:px-12 max-w-7xl mx-auto w-full" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
+      <section id="work" className="relative z-10 py-16 px-6 sm:px-12 max-w-7xl mx-auto w-full" style={{ backgroundColor: 'transparent', borderColor: 'var(--border-color)' }}>
         <div className="mb-16">
           <span className="text-xs font-semibold tracking-widest text-brand-greenLight uppercase py-1.5 px-4 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
             Completed Campaigns
@@ -945,12 +1140,12 @@ function App() {
         </div>
 
         <div className="w-full" style={{ height: "500px" }}>
-          <CoverflowCarousel items={portfolioItems} />
+          <CylinderCarousel images={portfolioItems} />
         </div>
       </section>
 
       {/* PROCESS SECTION */}
-      <section id="process" className="relative z-10 border-t py-24 px-6 sm:px-12 max-w-7xl mx-auto w-full overflow-hidden" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
+      <section id="process" className="relative z-10 py-16 px-6 sm:px-12 max-w-7xl mx-auto w-full overflow-hidden" style={{ backgroundColor: 'transparent', borderColor: 'var(--border-color)' }}>
         
         {/* Ambient 3D accent behind content */}
         <div className="absolute inset-0 flex justify-center items-center pointer-events-none z-0 opacity-30 md:opacity-40">
@@ -992,7 +1187,7 @@ function App() {
       </section>
 
       {/* PRICING SECTION */}
-      <section id="pricing" className="relative z-10 border-t py-24 px-6 sm:px-12 max-w-7xl mx-auto w-full" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
+      <section id="pricing" className="relative z-10 py-16 px-6 sm:px-12 max-w-7xl mx-auto w-full" style={{ backgroundColor: 'transparent', borderColor: 'var(--border-color)' }}>
         <div className="mb-12 text-center">
           <span className="text-xs font-semibold tracking-widest text-brand-greenLight uppercase py-1.5 px-4 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
             Acquisition Plans
@@ -1084,7 +1279,7 @@ function App() {
       </section>
 
       {/* AI CHATBOTS SECTION */}
-      <section id="chatbots" className="relative z-10 border-t py-24 px-6 sm:px-12 max-w-7xl mx-auto w-full" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
+      <section id="chatbots" className="relative z-10 py-16 px-6 sm:px-12 max-w-7xl mx-auto w-full" style={{ backgroundColor: 'transparent', borderColor: 'var(--border-color)' }}>
         <div className="mb-12 text-center">
           <span className="text-xs font-semibold tracking-widest text-brand-greenLight uppercase py-1.5 px-4 rounded-full" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
             AI Chatbots
@@ -1146,28 +1341,25 @@ function App() {
         </div>
 
         {/* Demo video embed slot */}
-        <div className="max-w-2xl mx-auto rounded-3xl overflow-hidden" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
-          <div className="aspect-video">
+        <div className="flex flex-col items-center gap-4" style={{ maxWidth: '360px', margin: '0 auto' }}>
+          <div className="w-full rounded-2xl overflow-hidden" style={{ aspectRatio: '9/16', border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
             <video
               src="/assets/chatbot-demo.mp4"
               autoPlay
               muted
               loop
               playsInline
-              className="w-full h-full object-cover"
-              style={{ display: 'block' }}
+              style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }}
             />
           </div>
-          <div className="p-6 text-center">
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              See how a Vizara AI chatbot works live — instant answers, brand-matched, human handoff when needed.
-            </p>
-          </div>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            See how a Vizara AI chatbot works live — instant answers, brand-matched, human handoff when needed.
+          </p>
         </div>
       </section>
 
       {/* CONTACT FORM SECTION */}
-      <section id="contact-anchor" className="relative z-10 border-t py-24 px-6 sm:px-12 max-w-4xl mx-auto w-full" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
+      <section id="contact-anchor" className="relative z-10 py-16 px-6 sm:px-12 max-w-4xl mx-auto w-full" style={{ backgroundColor: 'transparent', borderColor: 'var(--border-color)' }}>
         <div className="rounded-[36px] p-8 md:p-16 text-center" style={{ backgroundColor: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
           <h2 className="text-4xl font-semibold tracking-tight mb-4" style={{ color: 'var(--text-primary)' }}>
             Ready to look <span className="italic font-serif text-brand-greenLight">expensive?</span>
@@ -1220,12 +1412,15 @@ function App() {
       </section>
 
       {/* FOOTER */}
-      <footer className="relative z-10 border-t py-12 px-6 sm:px-12 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4" style={{ backgroundColor: 'var(--bg-primary)', borderColor: 'var(--border-color)' }}>
-        <span className="text-lg font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>Vizara Studio</span>
-        <span className="text-xs" style={{ color: 'var(--text-subtle)' }}>&copy; 2026 Vizara Studio. All rights reserved. Created via Orbital Operations.</span>
+      <footer className="relative z-10 w-full" style={{ backgroundColor: 'rgba(var(--bg-primary-r), var(--bg-primary-g), var(--bg-primary-b), 0.6)', borderColor: 'var(--border-color)', backdropFilter: 'blur(8px)' }}>
+        <div className="py-12 px-6 sm:px-12 max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+          <span className="text-lg font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>Vizara Studio</span>
+          <span className="text-xs" style={{ color: 'var(--text-subtle)' }}>&copy; 2026 Vizara Studio. All rights reserved. Created via Orbital Operations.</span>
+        </div>
       </footer>
 
     </div>
+    </>
   );
 }
 
