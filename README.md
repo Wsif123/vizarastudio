@@ -10,7 +10,6 @@ Related backend: https://github.com/Wsif123/vizara-support-agent — full operat
 
 ```
 index.html          # entire site (markup, styles, React components)
-chat-widget.js      # support widget loaded by index.html
 assets/             # portfolio images + videos
 ```
 
@@ -19,7 +18,7 @@ assets/             # portfolio images + videos
 `index.html` loads the widget at the end of `<body>`:
 
 ```html
-<script src="/chat-widget.js"
+<script src="https://vizara-support-agent.onrender.com/widget/chat-widget.js"
         data-api-url="https://vizara-support-agent.onrender.com/chat"
         data-client-id="vizara"></script>
 ```
@@ -31,7 +30,7 @@ assets/             # portfolio images + videos
 
 Design: void-black panel, nebula-purple accents, launcher bubble ↔ panel, SVG icons. Text overflow is fixed via `overflow-wrap: break-word` and `word-break: break-word` on message bubbles (`padding: 12px 16px`, `line-height: 1.6`).
 
-The canonical widget shipped to other customers is served by the backend at `/widget/chat-widget.js`; this repo hosts the copy used by the Vizara site. If you change widget behavior, update both (`chat-widget.js` here and `widget/chat-widget.js` in the backend repo).
+The widget is served by the backend at `/widget/chat-widget.js`; this repo does not host a copy.
 
 ## Local preview
 
