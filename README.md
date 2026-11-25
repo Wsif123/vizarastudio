@@ -20,11 +20,13 @@ assets/             # portfolio images + videos
 
 ```html
 <script src="/chat-widget.js"
-        data-api-url="https://vizara-support-agent.onrender.com/chat"></script>
+        data-api-url="https://vizara-support-agent.onrender.com/chat"
+        data-client-id="vizara"></script>
 ```
 
 - `data-api-url` — backend `/chat` endpoint (point at `http://localhost:8000/chat` for local dev)
 - `data-client-id` — optional; defaults to `"vizara"`. Sent in every request body.
+- `data-brand-name`, `data-greeting`, `data-followup-name`, `data-header-sub` — optional branding overrides for white-label clients.
 - Requests carry the browser's `Origin` header automatically; the backend allowlists `vizarastudioo.netlify.app`.
 
 Design: void-black panel, nebula-purple accents, launcher bubble ↔ panel, SVG icons. Text overflow is fixed via `overflow-wrap: break-word` and `word-break: break-word` on message bubbles (`padding: 12px 16px`, `line-height: 1.6`).

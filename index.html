@@ -865,7 +865,9 @@ function App() {
   ];
 
   const chatBotPlans = [
-    { name: 'Vizara Chatbot Service', price: '$90', unit: '/ mo', delivery: '3–5 day delivery', revisions: 'Priority updates', cta: 'Get Started', popular: true, features: ['Up to ~40 pages/FAQ worth of content', 'Fully brand-matched widget (colors, fonts, positioning)', 'Custom persona/tone tuning', 'Priority handling on content updates', 'Monthly usage summary (conversation volume, common questions)', '+ $150 one-time setup'] },
+    { name: 'Starter', price: '$149', unit: '/ mo', meta: '500 conversations / month', setup: '+ $500 one-time setup', cta: 'Get Started', popular: false, features: ['Fully brand-matched widget (colors, fonts, positioning)', 'Custom persona/tone tuning', 'Priority handling on content updates', 'Monthly usage summary (conversation volume, common questions)', '3–5 business day delivery'] },
+    { name: 'Growth', price: '$249', unit: '/ mo', meta: '2,000 conversations / month', setup: '+ $750 one-time setup', cta: 'Get Started', popular: true, features: ['Fully brand-matched widget (colors, fonts, positioning)', 'Custom persona/tone tuning', 'Priority handling on content updates', 'Monthly usage summary (conversation volume, common questions)', '3–5 business day delivery'] },
+    { name: 'Scale', price: '$399', unit: '/ mo', meta: '6,000 conversations / month', setup: '+ $1,500 one-time setup', cta: 'Get Started', popular: false, features: ['Fully brand-matched widget (colors, fonts, positioning)', 'Custom persona/tone tuning', 'Priority handling on content updates', 'Monthly usage summary (conversation volume, common questions)', '3–5 business day delivery'] },
   ];
 
   // Toggle Services selections
@@ -1291,72 +1293,74 @@ function App() {
           </p>
         </div>
 
-        {/* Chatbot Pricing Card + Demo Video side by side */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start max-w-4xl mx-auto">
-          {/* Pricing Card */}
-          <div>
-            {chatBotPlans.map((plan, idx) => (
-              <div
-                key={plan.name}
-                onMouseEnter={() => setChatHoveredCard(plan.name)}
-                onMouseLeave={() => setChatHoveredCard(null)}
-                className={`relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
-                  chatHoveredCard === plan.name
-                    ? 'border-2 border-brand-greenLight shadow-xl'
-                    : ''
-                }`}
-                style={chatHoveredCard === plan.name ? { backgroundColor: 'var(--bg-secondary)' } : { border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}
-              >
-                {plan.popular && (
-                  <span className="absolute top-6 right-6 text-[10px] font-bold tracking-wider text-brand-greenLight uppercase bg-brand-greenLight/10 border border-brand-greenLight/20 py-1 px-3 rounded-full">
-                    Most Popular
-                  </span>
-                )}
-                <div>
-                  <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--text-subtle)' }}>{plan.name}</span>
-                  <div className="text-4xl font-bold mt-4 mb-2" style={{ color: 'var(--text-primary)' }}>
-                    {plan.price}<span className="text-sm font-normal" style={{ color: 'var(--text-subtle)' }}> {plan.unit}</span>
-                  </div>
-                  <p className="text-xs mb-6" style={{ color: 'var(--text-secondary)' }}>{plan.delivery} &middot; {plan.revisions}</p>
-                  <ul className="space-y-3 mb-8">
-                    {plan.features.map((f, i) => (
-                      <li key={i} className="text-sm flex items-start gap-2" style={{ color: 'var(--text-neutral-700)' }}>
-                        <div className="w-1.5 h-1.5 rounded-full bg-brand-greenLight mt-1.5 shrink-0" /> {f}
-                      </li>
-                    ))}
-                  </ul>
+        {/* Chatbot Pricing Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          {chatBotPlans.map((plan, idx) => (
+            <div
+              key={plan.name}
+              onMouseEnter={() => setChatHoveredCard(plan.name)}
+              onMouseLeave={() => setChatHoveredCard(null)}
+              className={`relative rounded-3xl p-8 flex flex-col justify-between transition-all duration-300 ${
+                chatHoveredCard === plan.name
+                  ? 'border-2 border-brand-greenLight shadow-xl'
+                  : ''
+              }`}
+              style={chatHoveredCard === plan.name ? { backgroundColor: 'var(--bg-secondary)' } : { border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}
+            >
+              {plan.popular && (
+                <span className="absolute top-6 right-6 text-[10px] font-bold tracking-wider text-brand-greenLight uppercase bg-brand-greenLight/10 border border-brand-greenLight/20 py-1 px-3 rounded-full">
+                  Most Popular
+                </span>
+              )}
+              <div>
+                <span className="text-xs font-bold tracking-widest uppercase" style={{ color: 'var(--text-subtle)' }}>{plan.name}</span>
+                <div className="text-4xl font-bold mt-4 mb-2" style={{ color: 'var(--text-primary)' }}>
+                  {plan.price}<span className="text-sm font-normal" style={{ color: 'var(--text-subtle)' }}> {plan.unit}</span>
                 </div>
-                <button
-                  onClick={() => document.getElementById('contact-anchor').scrollIntoView({behavior:'smooth'})}
-                  className={`w-full py-4 rounded-full text-sm font-medium uppercase tracking-wider transition-all duration-200 ${
-                    chatHoveredCard === plan.name
-                      ? 'bg-brand-green text-white shadow-md hover:bg-neutral-800'
-                      : 'hover:border-neutral-400'
-                  }`}
-                  style={chatHoveredCard !== plan.name ? { border: '1px solid var(--border-color)', color: 'var(--text-primary)' } : {}}
-                >
-                  {plan.cta}
-                </button>
+                <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>{plan.meta}</p>
+                <p className="text-xs mb-6" style={{ color: 'var(--text-secondary)' }}>{plan.setup}</p>
+                <ul className="space-y-3 mb-8">
+                  {plan.features.map((f, i) => (
+                    <li key={i} className="text-sm flex items-start gap-2" style={{ color: 'var(--text-neutral-700)' }}>
+                      <div className="w-1.5 h-1.5 rounded-full bg-brand-greenLight mt-1.5 shrink-0" /> {f}
+                    </li>
+                  ))}
+                </ul>
               </div>
-            ))}
-          </div>
-
-          {/* Demo video embed slot */}
-          <div className="flex flex-col items-center gap-4" style={{ maxWidth: '360px', margin: '0 auto', width: '100%' }}>
-            <div className="w-full rounded-2xl overflow-hidden" style={{ aspectRatio: '9/16', border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
-              <video
-                src="/assets/chatbot-demo.mp4"
-                autoPlay
-                muted
-                loop
-                playsInline
-                style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }}
-              />
+              <button
+                onClick={() => document.getElementById('contact-anchor').scrollIntoView({behavior:'smooth'})}
+                className={`w-full py-4 rounded-full text-sm font-medium uppercase tracking-wider transition-all duration-200 ${
+                  chatHoveredCard === plan.name
+                    ? 'bg-brand-green text-white shadow-md hover:bg-neutral-800'
+                    : 'hover:border-neutral-400'
+                }`}
+                style={chatHoveredCard !== plan.name ? { border: '1px solid var(--border-color)', color: 'var(--text-primary)' } : {}}
+              >
+                {plan.cta}
+              </button>
             </div>
-            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-              See how a Vizara AI chatbot works live — instant answers, brand-matched, human handoff when needed.
-            </p>
+          ))}
+        </div>
+
+        <p className="text-xs text-center mt-8" style={{ color: 'var(--text-secondary)' }}>
+          Annual billing is 15% off the monthly price. Conversations are counted monthly; overage is billed.
+        </p>
+
+        {/* Demo video embed slot */}
+        <div className="flex flex-col items-center gap-4 mt-12" style={{ maxWidth: '360px', margin: '0 auto', width: '100%' }}>
+          <div className="w-full rounded-2xl overflow-hidden" style={{ aspectRatio: '9/16', border: '1px solid var(--border-color)', backgroundColor: 'var(--card-bg)' }}>
+            <video
+              src="/assets/chatbot-demo.mp4"
+              autoPlay
+              muted
+              loop
+              playsInline
+              style={{ width: '100%', height: '100%', display: 'block', objectFit: 'cover' }}
+            />
           </div>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            See how a Vizara AI chatbot works live — instant answers, brand-matched, human handoff when needed.
+          </p>
         </div>
       </section>
 
@@ -1431,6 +1435,11 @@ const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(<App />);
 </script>
 
-<script src="/chat-widget.js" data-api-url="https://vizara-support-agent.onrender.com/chat"></script>
+<script src="https://vizara-support-agent.onrender.com/widget/chat-widget.js"
+        data-api-url="https://vizara-support-agent.onrender.com/chat"
+        data-client-id="vizara"
+        data-brand-name="Vizara Studio"
+        data-followup-name="Wasif"
+        data-greeting="Hi! I can help with questions about Vizara Studio's video ads and product photography. How can I help you?"></script>
 </body>
 </html>
