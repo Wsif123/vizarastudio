@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Checkout | Vizara Studio</title>
+</head>
+<body>
+<script src="https://cdn.paddle.com/paddle/v2/paddle.js"></script>
+<script>
+  Paddle.Initialize({ token: "live_9d730fe5a4b4320cbc5cd421ec0" });
+
+  const txn = new URLSearchParams(location.search).get("_ptxn");
+
+  if (txn) {
+    Paddle.Checkout.open({ transactionId: txn });
+  } else {
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      "<p style='font-family:Inter,sans-serif;padding:40px'>No transaction id.</p>"
+    );
+  }
+</script>
+</body>
+</html>
